@@ -79,6 +79,12 @@ def tally(scope: str, poll_id: str, ballots: Iterable[dict],
         choice = ballot["choice"]
         if not isinstance(seq, int) or isinstance(seq, bool):
             raise ValueError("ballot seq must be an int")
+        # `choice` is used as a dict key (counts[choice]) and later sorted, and the Ballot
+        # contract declares it int-only. Validate it here too so a raw ballot dict with a
+        # non-int (e.g. list/dict) choice raises a clear ValueError instead of crashing the
+        # tally with an unhashable-key or heterogeneous-sort TypeError downstream.
+        if not isinstance(choice, int) or isinstance(choice, bool):
+            raise ValueError("ballot choice must be an int")
         cid = canonical.cid(ballot)
         current = winners.get(nullifier)
         # Highest seq wins; ties broken by the smallest CID (deterministic, order-independent).

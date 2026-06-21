@@ -128,3 +128,22 @@ def test_ballot_root_commits_to_the_included_set():
     root_b = tally(SCOPE, POLL, base + [_ballot(_nf(2), 1)])["ballot_root"]
     assert root_b != root_a
     assert crypto.is_valid_hex(root_a, 32)
+
+
+@pytest.mark.property
+def test_non_int_choice_raises_clean_valueerror_not_crash():
+    # A raw ballot dict (bypassing the int-only Ballot contract) with a non-int `choice` must raise
+    # a clear ValueError, not crash the tally with an unhashable-key / heterogeneous-sort TypeError.
+    for bad_choice in ([1, 2], {"x": 1}, "0"):
+        b = _ballot(_nf(1), 0)
+        b["choice"] = bad_choice
+        with pytest.raises(ValueError, match="choice must be an int"):
+            tally(SCOPE, POLL, [b])
+
+
+@pytest.mark.property
+def test_bool_choice_is_rejected():
+    b = _ballot(_nf(1), 0)
+    b["choice"] = True  # bool is an int subclass but not a valid choice
+    with pytest.raises(ValueError, match="choice must be an int"):
+        tally(SCOPE, POLL, [b])
