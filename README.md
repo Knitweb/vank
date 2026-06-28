@@ -9,6 +9,8 @@ This repo owns the voting-domain layer:
 - signed poll definitions and independently auditable results;
 - weighted, liquid, and ranked-choice voting;
 - signed election manifests that group multiple poll definitions for clients and indexers.
+- demographic vote-supply registries, treasury-backed vote issuance, recency weighting,
+  one-person-one-backing crowdfunding, and proximity-gated local backing.
 
 Pulse remains the dependency for core primitives: canonical encoding/CIDs, signatures,
 fabric Web storage, attestations, and personhood tickets.
@@ -18,6 +20,8 @@ fabric Web storage, attestations, and personhood tickets.
 - `src/knitweb_vbank/` - package code.
 - `tests/property/` - deterministic regression/property tests.
 - `docs/ARCHITECTURE.md` - package boundary and record overview.
+- `docs/VOTE_SUPPLY_CROWDFUND.md` - migrated VoteBank supply, recency, and crowdfunding notes.
+- `docs/TIME_VALUE_AND_RELEVANCE.md` - geometric time-value research note.
 
 ## Development
 
@@ -41,3 +45,7 @@ The `vbank-election` manifest is the first layer that belongs naturally outside 
 Pulse core. It signs a user-facing election event that links to one or more signed
 `vbank-poll` definitions by CID, giving frontends and indexers a stable object to
 discover before resolving the individual poll records.
+
+The migrated VoteBank supply layer adds the treasury-style issuance and campaign mechanics
+from `febuz/pulse` PR #74 as standalone `knitweb_vbank` modules, keeping Pulse as the
+primitive dependency for canonical IDs, signatures, ledger settlement, and personhood.

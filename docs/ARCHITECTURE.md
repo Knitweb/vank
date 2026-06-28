@@ -17,6 +17,12 @@ Owned here:
 - `vbank-delegation`
 - `vbank-liquid-result`
 - `vbank-election`
+- `govern-registration`
+- `govern-vote-issuance`
+- `govern-pledge`
+- `govern-campaign`
+- `govern-proximity`
+- `govern-settlement`
 
 Provided by Pulse:
 
@@ -65,3 +71,12 @@ order.
 All public records are canonical-encoded before signing or returning. Read models sort
 by CID when reading from a `Web`. Tally algorithms are order-independent: repeated votes
 dedupe by scope nullifier, with highest sequence winning and CID tie-breaks where needed.
+
+## Vote Supply And Crowdfunding
+
+The VoteBank supply modules migrated from `febuz/pulse` PR #74 live beside the ballot
+domain rather than inside Pulse core. `WorldRegistry` keeps the demographic cap, `VoteBank`
+issues one vote per registered subject from that cap, `recency_tally` handles integer
+geometric vote decay, and `Campaign` applies the same one-person rule to crowdfunding
+backing. `settle` remains a bridge onto Pulse ledger Knits; float analytics stay outside
+the value path.

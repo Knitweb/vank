@@ -67,6 +67,18 @@ from .ranked import (
     verify_ranked_result,
 )
 from .tally import BALLOT_KIND, TALLY_KIND, collect_ballots, tally
+from .registry import (
+    Registration,
+    RegistrationKind,
+    WorldRegistry,
+    register_freeport,
+    register_national,
+)
+from .votebank import VoteBank, VoteIssuance
+from .recency import Decay, Vote, WeightedTally, recency_tally
+from .crowdfund import Campaign, CampaignResult, CampaignStatus, Pledge
+from .proximity import ProximityProof, attest as attest_proximity
+from .settle import SettlementKind, SettlementOrder, settle
 
 __all__ = [
     "Ballot", "VbankKnitweb", "tally", "collect_ballots", "BALLOT_KIND", "TALLY_KIND",
@@ -81,6 +93,11 @@ __all__ = [
     "RANKED_BALLOT_KIND", "RANKED_RESULT_KIND",
     "Election", "VbankElection", "collect_elections", "election_status", "is_election_open",
     "election_poll_records", "ELECTION_KIND",
+    "Registration", "RegistrationKind", "WorldRegistry", "register_national",
+    "register_freeport", "VoteBank", "VoteIssuance", "Decay", "Vote",
+    "WeightedTally", "recency_tally", "Campaign", "CampaignResult",
+    "CampaignStatus", "Pledge", "ProximityProof", "attest_proximity",
+    "SettlementKind", "SettlementOrder", "settle",
 ]
 
 
