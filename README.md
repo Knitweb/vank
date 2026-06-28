@@ -1,51 +1,70 @@
-# Knitweb vBank
+# knitweb/vank
 
-Standalone vBank domain package for Knitweb/Pulse.
+VoteBank DAO, graphical Scrum Poker, and pulse-integrated voting governance for Knitweb.
 
-This repo owns the voting-domain layer:
+Two packages co-reside in `src/`:
 
-- personhood-gated ballot emission;
-- deterministic one-person-one-vote tallying;
-- signed poll definitions and independently auditable results;
-- weighted, liquid, and ranked-choice voting;
-- signed election manifests that group multiple poll definitions for clients and indexers.
-- demographic vote-supply registries, treasury-backed vote issuance, recency weighting,
-  one-person-one-backing crowdfunding, and proximity-gated local backing.
+| Package | Description |
+|---------|-------------|
+| `knitweb_vbank` | Pulse-integrated voting governance: personhood-gated ballots, deterministic tallying, signed polls, ranked/liquid/crowdfund voting |
+| `vank` | Standalone float-friendly DAO + graphical Scrum Poker (zero deps beyond stdlib) |
 
-Pulse remains the dependency for core primitives: canonical encoding/CIDs, signatures,
-fabric Web storage, attestations, and personhood tickets.
+## knitweb_vbank
+
+Pulse-dependent voting domain layer:
+
+- Personhood-gated ballot emission and one-person-one-vote tallying
+- Signed poll definitions with independently auditable results
+- Weighted, liquid, and ranked-choice voting
+- Signed election manifests grouping multiple poll definitions
+- Demographic vote-supply registries, treasury-backed vote issuance, recency weighting
+- One-person-one-backing crowdfunding, proximity-gated local backing
+
+Requires `knitweb` (Pulse) for canonical CIDs, signatures, fabric Web, and personhood tickets.
+
+## vank — VoteBank DAO + Scrum Poker
+
+Standalone, zero-dependency (stdlib only) DAO layer with graphical Scrum Poker:
+
+- `VoteBankDAO` — float-friendly, insertion-ordered, recency-weighted tally, EMA momentum
+- `PokerSession` — Fibonacci deck, tolerance-based consensus, outlier detection, upper-median agreed card
+- HTTP server + self-contained vanilla JS UI (card grid, reveal, distribution chart, velocity sparkline)
+
+### Run Scrum Poker
+
+```bash
+pip install knitweb-vank
+vank-poker --port 8000 --tolerance 1
+# open http://localhost:8000
+```
+
+Or without installing:
+
+```bash
+PYTHONPATH=src python3 -m vank.poker_server --port 8000
+```
 
 ## Layout
 
-- `src/knitweb_vbank/` - package code.
-- `tests/property/` - deterministic regression/property tests.
-- `docs/ARCHITECTURE.md` - package boundary and record overview.
-- `docs/VOTE_SUPPLY_CROWDFUND.md` - migrated VoteBank supply, recency, and crowdfunding notes.
-- `docs/TIME_VALUE_AND_RELEVANCE.md` - geometric time-value research note.
+```
+src/
+  knitweb_vbank/   pulse-integrated governance modules
+  vank/            standalone DAO + Scrum Poker
+    static/        poker.html self-contained UI
+tests/
+  property/
+    test_vbank_*   knitweb_vbank property tests (require knitweb)
+    test_vank_*    standalone vank tests (no deps)
+docs/              architecture, vote-supply, time-value notes
+```
 
 ## Development
 
-Until Pulse is published as a package, keep a Pulse checkout available and install it
-editable for local tests:
-
 ```bash
 git clone https://github.com/Knitweb/pulse ../pulse
-python -m pip install -e ../pulse
-PYTHONPATH=src:../pulse/src python -m pytest -q
+pip install -e "../pulse[dev]"
+pip install -e ".[dev]"
+python3 -m pytest tests/ -q
 ```
 
-If you already have a Pulse checkout, use that path instead of cloning again.
-
-The GitHub Actions workflow checks out `Knitweb/pulse` beside this repo, installs it
-editable, and runs the same package compile + pytest flow with `PYTHONPATH=src:pulse/src`.
-
-## New in this repo
-
-The `vbank-election` manifest is the first layer that belongs naturally outside the
-Pulse core. It signs a user-facing election event that links to one or more signed
-`vbank-poll` definitions by CID, giving frontends and indexers a stable object to
-discover before resolving the individual poll records.
-
-The migrated VoteBank supply layer adds the treasury-style issuance and campaign mechanics
-from `febuz/pulse` PR #74 as standalone `knitweb_vbank` modules, keeping Pulse as the
-primitive dependency for canonical IDs, signatures, ledger settlement, and personhood.
+The GitHub Actions workflow checks out `Knitweb/pulse` beside this repo, installs it, and runs compile + pytest.

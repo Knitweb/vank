@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scrum Poker — VoteBank</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #242736;
+    --border: #2e3248;
+    --accent: #6c8ef5;
+    --accent2: #a78bfa;
+    --green: #34d399;
+    --red: #f87171;
+    --yellow: #fbbf24;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --radius: 10px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 15px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 48px;
+  }
+
+  header {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+
+  header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  #status-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--green);
+    display: inline-block;
+    margin-right: 6px;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .main {
+    width: 100%;
+    max-width: 900px;
+    display: grid;
+    gap: 20px;
+  }
+
+  .card-panel, .players-panel, .result-panel, .velocity-panel, .join-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+
+  .panel-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  /* Join form */
+  .join-panel {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+
+  .join-panel label { font-size: 0.85rem; color: var(--muted); display: block; margin-bottom: 6px; }
+
+  .join-panel input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 9px 14px;
+    font-size: 1rem;
+    outline: none;
+    flex: 1;
+  }
+
+  .join-panel input:focus { border-color: var(--accent); }
+
+  button {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 9px 20px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+  }
+
+  button:hover { opacity: 0.85; }
+  button:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  button.secondary {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  button.danger { background: #7f1d1d; color: var(--red); border: 1px solid #991b1b; }
+
+  /* Deck cards */
+  .deck-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .deck-card {
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    width: 60px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.1s, background 0.15s;
+    user-select: none;
+  }
+
+  .deck-card:hover {
+    border-color: var(--accent);
+    background: #1e2340;
+    transform: translateY(-3px);
+  }
+
+  .deck-card.selected {
+    border-color: var(--accent);
+    background: #1e2a4a;
+    box-shadow: 0 0 12px rgba(108,142,245,0.4);
+    transform: translateY(-4px);
+  }
+
+  .deck-card.special { color: var(--accent2); }
+
+  /* Players */
+  .players-list { display: flex; flex-wrap: wrap; gap: 10px; }
+
+  .player-chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+  }
+
+  .player-chip.outlier { border-color: var(--red); }
+  .player-chip.outlier .chip-name { color: var(--red); }
+
+  .chip-icon { font-size: 1rem; }
+  .chip-card {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--accent);
+    min-width: 24px;
+    text-align: center;
+  }
+
+  /* Actions */
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  /* Result panel */
+  .result-panel { display: none; }
+  .result-panel.visible { display: block; }
+
+  .result-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+
+  .consensus-badge {
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 1rem;
+  }
+
+  .consensus-badge.yes { background: rgba(52,211,153,0.15); color: var(--green); border: 1px solid var(--green); }
+  .consensus-badge.no  { background: rgba(248,113,113,0.15); color: var(--red);   border: 1px solid var(--red); }
+
+  .result-stats { display: flex; gap: 20px; flex-wrap: wrap; font-size: 0.88rem; color: var(--muted); margin-bottom: 16px; }
+  .result-stats span { display: flex; flex-direction: column; gap: 2px; }
+  .result-stats strong { color: var(--text); font-size: 1.1rem; }
+
+  .bar-chart { display: flex; flex-direction: column; gap: 6px; }
+  .bar-row { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; }
+  .bar-label { width: 38px; text-align: right; font-weight: 600; }
+  .bar-track { flex: 1; background: var(--surface2); border-radius: 4px; height: 20px; overflow: hidden; }
+  .bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 4px; transition: width 0.4s ease; }
+  .bar-pct { width: 38px; color: var(--muted); font-size: 0.78rem; }
+
+  /* Velocity sparkline */
+  .velocity-panel { display: none; }
+  .velocity-panel.visible { display: block; }
+  .sparkline-wrap { overflow-x: auto; }
+
+  /* Toast */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 18px;
+    font-size: 0.9rem;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+    max-width: 280px;
+    z-index: 100;
+  }
+
+  #toast.show { opacity: 1; transform: translateY(0); }
+
+  .hidden { display: none !important; }
+
+  #my-card-display {
+    margin-top: 10px;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+
+  #my-card-display span {
+    font-weight: 700;
+    color: var(--accent);
+    font-size: 1.1rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Scrum Poker</h1>
+  <div style="display:flex;align-items:center;gap:8px;font-size:0.8rem;color:var(--muted)">
+    <span id="status-dot"></span>
+    <span id="version-label">v0</span>
+  </div>
+</header>
+
+<div class="main" id="app">
+
+  <!-- Join panel -->
+  <div class="join-panel" id="join-panel">
+    <div style="flex:1">
+      <label for="name-input">Your name</label>
+      <input id="name-input" type="text" placeholder="Enter your name…" autocomplete="off" maxlength="40">
+    </div>
+    <button id="join-btn">Join session</button>
+  </div>
+
+  <!-- Deck -->
+  <div class="card-panel hidden" id="deck-panel">
+    <div class="panel-title">Pick your card</div>
+    <div class="deck-grid" id="deck-grid"></div>
+    <div id="my-card-display"></div>
+  </div>
+
+  <!-- Players -->
+  <div class="players-panel hidden" id="players-panel">
+    <div class="panel-title">Players</div>
+    <div class="players-list" id="players-list"></div>
+  </div>
+
+  <!-- Actions -->
+  <div class="card-panel hidden" id="actions-panel">
+    <div class="panel-title">Actions</div>
+    <div class="actions">
+      <button id="btn-reveal">Reveal</button>
+      <button id="btn-revote" class="secondary">Revote</button>
+      <button id="btn-finalize" class="secondary">Finalize</button>
+      <button id="btn-reset" class="danger">Reset session</button>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div class="result-panel" id="result-panel">
+    <div class="panel-title">Round result</div>
+    <div class="result-header" id="result-header"></div>
+    <div class="result-stats" id="result-stats"></div>
+    <div class="bar-chart" id="bar-chart"></div>
+  </div>
+
+  <!-- Velocity -->
+  <div class="velocity-panel" id="velocity-panel">
+    <div class="panel-title">Velocity sparkline</div>
+    <div class="sparkline-wrap" id="sparkline-wrap"></div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ---------------------------------------------------------------------------
+// State
+// ---------------------------------------------------------------------------
+let myName = localStorage.getItem('vank_player') || '';
+let myCard = null;
+let deck = [];
+let lastVersion = -1;
+let pollTimer = null;
+
+// ---------------------------------------------------------------------------
+// Toast
+// ---------------------------------------------------------------------------
+function toast(msg, dur = 2800) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), dur);
+}
+
+// ---------------------------------------------------------------------------
+// API helpers
+// ---------------------------------------------------------------------------
+async function apiFetch(path, opts = {}) {
+  const r = await fetch(path, opts);
+  const data = await r.json();
+  if (data.error) throw new Error(data.error);
+  return data;
+}
+
+async function postJson(path, body = {}) {
+  return apiFetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Deck
+// ---------------------------------------------------------------------------
+async function loadDeck() {
+  try {
+    const data = await apiFetch('/api/deck');
+    deck = data.deck;
+    renderDeckGrid();
+  } catch (e) {
+    toast('Failed to load deck: ' + e.message);
+  }
+}
+
+function renderDeckGrid() {
+  const grid = document.getElementById('deck-grid');
+  grid.innerHTML = '';
+  const specials = new Set(['?', '☕']);
+  deck.forEach(card => {
+    const el = document.createElement('div');
+    el.className = 'deck-card' + (specials.has(card) ? ' special' : '');
+    el.textContent = card;
+    el.dataset.card = card;
+    if (card === myCard) el.classList.add('selected');
+    el.addEventListener('click', () => onCardClick(card, el));
+    grid.appendChild(el);
+  });
+}
+
+async function onCardClick(card, el) {
+  if (!myName) { toast('Join first'); return; }
+  try {
+    await postJson('/api/vote', { player: myName, card });
+    myCard = card;
+    document.querySelectorAll('.deck-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    updateMyCardDisplay();
+    await poll(true);
+  } catch (e) {
+    toast(e.message);
+  }
+}
+
+function updateMyCardDisplay() {
+  const el = document.getElementById('my-card-display');
+  if (myCard) {
+    el.innerHTML = 'Your vote: <span>' + myCard + '</span>';
+  } else {
+    el.innerHTML = '';
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Join
+// ---------------------------------------------------------------------------
+async function joinSession() {
+  const input = document.getElementById('name-input');
+  const name = input.value.trim();
+  if (!name) { toast('Enter your name'); return; }
+  try {
+    await postJson('/api/join', { player: name });
+    myName = name;
+    localStorage.setItem('vank_player', name);
+    showGameUI();
+    await poll(true);
+  } catch (e) {
+    toast('Join failed: ' + e.message);
+  }
+}
+
+function showGameUI() {
+  document.getElementById('join-panel').classList.add('hidden');
+  document.getElementById('deck-panel').classList.remove('hidden');
+  document.getElementById('players-panel').classList.remove('hidden');
+  document.getElementById('actions-panel').classList.remove('hidden');
+}
+
+// ---------------------------------------------------------------------------
+// Polling
+// ---------------------------------------------------------------------------
+async function poll(force = false) {
+  if (!myName) return;
+  try {
+    const state = await apiFetch('/api/state?player=' + encodeURIComponent(myName));
+    if (!force && state.version === lastVersion) return;
+    lastVersion = state.version;
+    document.getElementById('version-label').textContent = 'v' + state.version;
+    render(state);
+  } catch (e) {
+    // network hiccup — ignore
+  }
+}
+
+function startPolling() {
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(() => poll(), 2000);
+}
+
+// ---------------------------------------------------------------------------
+// Render
+// ---------------------------------------------------------------------------
+function render(state) {
+  renderPlayers(state);
+  renderResult(state);
+  renderVelocity(state.velocity || []);
+  // Sync myCard from state (e.g. after revote)
+  const me = (state.players || []).find(p => p.name === myName);
+  if (me && me.card !== myCard) {
+    myCard = me.card;
+    renderDeckGrid();
+    updateMyCardDisplay();
+  }
+}
+
+function renderPlayers(state) {
+  const list = document.getElementById('players-list');
+  const outliers = new Set((state.result && state.result.outliers) || []);
+  list.innerHTML = '';
+  (state.players || []).forEach(p => {
+    const chip = document.createElement('div');
+    chip.className = 'player-chip' + (outliers.has(p.name) ? ' outlier' : '');
+    const icon = p.voted ? '✓' : '…';
+    const cardTxt = p.card != null ? p.card : (p.voted ? '✓' : '—');
+    chip.innerHTML =
+      '<span class="chip-icon">' + icon + '</span>' +
+      '<span class="chip-name">' + esc(p.name) + '</span>' +
+      '<span class="chip-card">' + esc(cardTxt) + '</span>';
+    list.appendChild(chip);
+  });
+}
+
+function renderResult(state) {
+  const panel = document.getElementById('result-panel');
+  const r = state.result;
+  if (!r) { panel.classList.remove('visible'); return; }
+  panel.classList.add('visible');
+
+  // Header: consensus badge + agreed card
+  const hdr = document.getElementById('result-header');
+  if (r.consensus) {
+    hdr.innerHTML =
+      '<span class="consensus-badge yes">Consensus ✓</span>' +
+      '<span style="font-size:1.4rem;font-weight:700;color:var(--accent)">' + esc(r.agreed_card) + '</span>';
+  } else {
+    hdr.innerHTML =
+      '<span class="consensus-badge no">No consensus</span>' +
+      (r.agreed_card ? '<span style="color:var(--muted);font-size:0.9rem">Upper-median: <strong style="color:var(--text)">' + esc(r.agreed_card) + '</strong></span>' : '');
+  }
+
+  // Stats row
+  const stats = document.getElementById('result-stats');
+  stats.innerHTML =
+    '<span><strong>' + r.mean.toFixed(1) + '</strong>Mean</span>' +
+    '<span><strong>' + r.median.toFixed(1) + '</strong>Median</span>' +
+    '<span><strong>' + r.range + '</strong>Range (pts)</span>' +
+    '<span><strong>' + r.spread_steps + '</strong>Spread (steps)</span>' +
+    (r.outliers.length ? '<span><strong style="color:var(--red)">' + r.outliers.length + '</strong>Outlier(s)</span>' : '');
+
+  // Bar chart
+  const chart = document.getElementById('bar-chart');
+  chart.innerHTML = '';
+  const sortedCards = Object.keys(r.distribution).sort((a, b) => {
+    const ai = deck.indexOf(a), bi = deck.indexOf(b);
+    return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+  });
+  sortedCards.forEach(card => {
+    const pct = r.distribution[card];
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    row.innerHTML =
+      '<span class="bar-label">' + esc(card) + '</span>' +
+      '<span class="bar-track"><span class="bar-fill" style="width:' + Math.round(pct * 100) + '%"></span></span>' +
+      '<span class="bar-pct">' + Math.round(pct * 100) + '%</span>';
+    chart.appendChild(row);
+  });
+}
+
+function renderVelocity(vel) {
+  const panel = document.getElementById('velocity-panel');
+  if (!vel.length) { panel.classList.remove('visible'); return; }
+  panel.classList.add('visible');
+
+  const wrap = document.getElementById('sparkline-wrap');
+  const W = Math.max(vel.length * 40 + 40, 200);
+  const H = 60;
+  const pad = 10;
+  const min = Math.min(...vel);
+  const max = Math.max(...vel);
+  const range = max - min || 1;
+
+  const pts = vel.map((v, i) => {
+    const x = pad + i * ((W - 2 * pad) / Math.max(vel.length - 1, 1));
+    const y = H - pad - ((v - min) / range) * (H - 2 * pad);
+    return [x, y];
+  });
+
+  const polyline = pts.map(([x, y]) => x + ',' + y).join(' ');
+
+  let svgDots = pts.map(([x, y], i) =>
+    '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="4" fill="' +
+    (i === vel.length - 1 ? 'var(--accent2)' : 'var(--accent)') + '"/>' +
+    '<text x="' + x.toFixed(1) + '" y="' + (y - 8).toFixed(1) + '" text-anchor="middle" fill="var(--muted)" font-size="10">' +
+    vel[i] + '</text>'
+  ).join('');
+
+  wrap.innerHTML =
+    '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">' +
+    '<polyline points="' + polyline + '" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/>' +
+    svgDots +
+    '</svg>';
+}
+
+// ---------------------------------------------------------------------------
+// Escape HTML
+// ---------------------------------------------------------------------------
+function esc(str) {
+  if (str == null) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ---------------------------------------------------------------------------
+// Button handlers
+// ---------------------------------------------------------------------------
+document.getElementById('join-btn').addEventListener('click', joinSession);
+document.getElementById('name-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') joinSession();
+});
+
+document.getElementById('btn-reveal').addEventListener('click', async () => {
+  try { await postJson('/api/reveal'); await poll(true); }
+  catch (e) { toast(e.message); }
+});
+
+document.getElementById('btn-revote').addEventListener('click', async () => {
+  myCard = null;
+  try { await postJson('/api/revote'); renderDeckGrid(); updateMyCardDisplay(); await poll(true); }
+  catch (e) { toast(e.message); }
+});
+
+document.getElementById('btn-finalize').addEventListener('click', async () => {
+  try {
+    const d = await postJson('/api/finalize');
+    toast(d.value != null ? 'Finalized: ' + d.value + ' pts' : 'No numeric agreement to finalize');
+    await poll(true);
+  } catch (e) { toast(e.message); }
+});
+
+document.getElementById('btn-reset').addEventListener('click', async () => {
+  if (!confirm('Reset the session? All votes and velocity will be cleared.')) return;
+  myCard = null;
+  try { await postJson('/api/reset'); renderDeckGrid(); updateMyCardDisplay(); lastVersion = -1; await poll(true); }
+  catch (e) { toast(e.message); }
+});
+
+// ---------------------------------------------------------------------------
+// Boot
+// ---------------------------------------------------------------------------
+(async () => {
+  await loadDeck();
+  if (myName) {
+    // Re-join in case server restarted
+    try { await postJson('/api/join', { player: myName }); } catch (_) {}
+    showGameUI();
+  } else {
+    document.getElementById('name-input').focus();
+  }
+  await poll(true);
+  startPolling();
+})();
+</script>
+</body>
+</html>

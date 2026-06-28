@@ -3,19 +3,29 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "knitweb-vbank"
-version = "0.1.0"
-description = "vBank voting domain package for Knitweb/Pulse"
+name = "knitweb-vank"
+version = "0.2.0"
+description = "vank — VoteBank DAO, graphical Scrum Poker, and pulse-integrated voting governance for Knitweb"
 requires-python = ">=3.12"
 readme = "README.md"
-license = { text = "Proprietary" }
-authors = [{ name = "Knitweb" }]
+license = { text = "Apache-2.0" }
+authors = [{ name = "Knitweb", email = "develuse@gmail.com" }]
 dependencies = []
+
+[project.optional-dependencies]
+dev = ["knitweb>=0.6.0", "pytest>=8"]
+
+[project.scripts]
+vank-poker = "vank.poker_server:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+vank = ["static/*.html"]
+
 [tool.pytest.ini_options]
+pythonpath = ["src"]
 markers = [
   "property: deterministic property/regression tests",
 ]
