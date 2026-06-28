@@ -109,6 +109,25 @@ wrong backer/beacon is rejected; one merely out of range or stale is accepted as
 Integer/hash only (signal strength is integer dBm; the proof is content-addressed). Beacon
 co-signing of the encounter is a noted production-hardening follow-up.
 
+## 6. Settlement seam (`settle.py`)
+
+The float analytics layer values instruments and *decides* what to pay: a bond coupon, a
+redemption, or a conversion. It quantises that decision to an integer amount and hands it across
+the seam. The vBank half takes that as an integer-only `SettlementOrder` and executes it as a
+dual-signed Knit:
+
+```python
+# analytics side - the one explicit crossing:
+amount_wei = instruction.quantize()  # int(amount * scale) -> int
+
+# vBank side - integer value path:
+settle(SettlementOrder(kind, amount_wei), issuer, holder, timestamp=t)
+```
+
+`SettlementOrder` re-asserts integer-ness at the boundary: a float amount is rejected before it
+can touch a signed record. `settle()` reuses Pulse `AccountNode.transfer_to`, so nonce, network
+id, signatures, and balance guards all still apply.
+
 ## Why these choices
 
 - **Anchored supply, not fiat.** Tying the cap to registered humans + births is what keeps
@@ -128,18 +147,23 @@ co-signing of the encounter is a noted production-hardening follow-up.
 
 ## Proofs
 
-`tests/property/test_govern_votebank.py` — no premine; national + freeport both count;
+`tests/property/test_vbank_vote_supply.py` — no premine; national + freeport both count;
 one-vote-per-person dedup across worlds and across the freeport pair; moon supply =
 persons + expected births; issuance never exceeds the cap; geometric weight decay; horizon
 cut-off; recent votes win; one-vote-per-subject and future-vote rejection in the tally; and a
 full register → issue → recency-weighted vote loop.
 
-`tests/property/test_govern_crowdfund.py` — no premine/conservation; only registered people may
+`tests/property/test_vbank_crowdfund.py` — no premine/conservation; only registered people may
 back; one backing per person (no whale stuffing); capital-met-but-breadth-missing expires;
 underfunded refunds everyone; funded releases all to beneficiary; resolve idempotent and closes
 pledging; freeport backers count for breadth; momentum weights recent backing more.
 
-`tests/property/test_govern_proximity.py` — proximity proof validation + BLE range; local pledge
+`tests/property/test_vbank_proximity.py` — proximity proof validation + BLE range; local pledge
 counts when present; capital met but no local presence expires; out-of-range/stale proof is
 non-local (not an error); wrong-backer/beacon proof rejected; `min_local_backers` requires a
 beacon; freeport device can be a local backer; non-local campaigns unaffected.
+
+`tests/property/test_vbank_settle.py` — float/bool amount rejected at the boundary; negative
+rejected; wrong kind type rejected; COUPON/REDEMPTION settle PLS with exact balance change and
+dual signatures; CONVERSION settles underlying tokens; insufficient balance refused with no state
+change; nonce advances across serial settlements; CID stability; record is float-free.
