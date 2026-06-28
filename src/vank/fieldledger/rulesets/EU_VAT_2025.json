@@ -1,0 +1,71 @@
+{
+  "kind": "tax-ruleset",
+  "jurisdiction": "EU",
+  "fiscal_year": 2025,
+  "entity_types": ["B2C", "B2B", "OSS"],
+  "zero_cit": false,
+  "parameters": {
+    "vat_rates_by_country": {
+      "key": "vat_rates_by_country",
+      "label": "EU VAT Rates by Member State 2025",
+      "bracket_type": "flat_rate",
+      "brackets": [],
+      "flat_rate": 0.21,
+      "currency": "EUR",
+      "notes": "EU average fallback rate 21%. Standard/Reduced rates per member state: AT:20/10, BE:21/6, BG:20/9, CY:19/5, CZ:21/12, DE:19/7, DK:25/0, EE:22/9, ES:21/10, FI:25.5/14, FR:20/5.5, GR:24/13, HR:25/5, HU:27/18, IE:23/13.5, IT:22/10, LT:21/9, LU:17/8, LV:21/12, MT:18/7, NL:21/9, PL:23/8, PT:23/13, RO:19/9, SE:25/12, SI:22/9.5, SK:23/10. See country_rates for machine-readable dict."
+    },
+    "vat_oss": {
+      "key": "vat_oss",
+      "label": "EU VAT One Stop Shop (OSS) — B2C cross-border",
+      "bracket_type": "flat_rate",
+      "brackets": [],
+      "flat_rate": 0.21,
+      "currency": "EUR",
+      "notes": "OSS regime (EU Directive 2021/904): B2C digital/goods supplies taxed at the destination country rate. Seller registers once in one EU member state and reports/remits VAT for all EU-wide B2C sales via OSS portal. flat_rate=0.21 is the EU average fallback; actual rate = destination country standard rate from country_rates dict. Threshold below which home-country rate applies: EUR 10,000/year aggregate."
+    },
+    "vat_reverse_charge": {
+      "key": "vat_reverse_charge",
+      "label": "EU VAT Reverse Charge — B2B cross-border",
+      "bracket_type": "flat_rate",
+      "brackets": [],
+      "flat_rate": 0.0,
+      "currency": "EUR",
+      "notes": "B2B cross-border supplies within the EU: seller invoices at 0% VAT (flat_rate=0.0), buyer self-accounts for VAT in their own jurisdiction under the reverse charge mechanism. Art. 44 EU VAT Directive 2006/112/EC. Requires valid EU VAT number (VIES validation) of the buyer."
+    }
+  },
+  "sources": [
+    "https://ec.europa.eu/taxation_customs/business/vat/eu-vat-rules-topic/vat-rates_en",
+    "https://europa.eu/youreurope/business/taxation/vat/vat-rules-rates/index_en.htm",
+    "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32021L0514",
+    "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32006L0112"
+  ],
+  "country_rates": {
+    "AT": {"standard": 20,   "reduced": 10},
+    "BE": {"standard": 21,   "reduced": 6},
+    "BG": {"standard": 20,   "reduced": 9},
+    "CY": {"standard": 19,   "reduced": 5},
+    "CZ": {"standard": 21,   "reduced": 12},
+    "DE": {"standard": 19,   "reduced": 7},
+    "DK": {"standard": 25,   "reduced": 0},
+    "EE": {"standard": 22,   "reduced": 9},
+    "ES": {"standard": 21,   "reduced": 10},
+    "FI": {"standard": 25.5, "reduced": 14},
+    "FR": {"standard": 20,   "reduced": 5.5},
+    "GR": {"standard": 24,   "reduced": 13},
+    "HR": {"standard": 25,   "reduced": 5},
+    "HU": {"standard": 27,   "reduced": 18},
+    "IE": {"standard": 23,   "reduced": 13.5},
+    "IT": {"standard": 22,   "reduced": 10},
+    "LT": {"standard": 21,   "reduced": 9},
+    "LU": {"standard": 17,   "reduced": 8},
+    "LV": {"standard": 21,   "reduced": 12},
+    "MT": {"standard": 18,   "reduced": 7},
+    "NL": {"standard": 21,   "reduced": 9},
+    "PL": {"standard": 23,   "reduced": 8},
+    "PT": {"standard": 23,   "reduced": 13},
+    "RO": {"standard": 19,   "reduced": 9},
+    "SE": {"standard": 25,   "reduced": 12},
+    "SI": {"standard": 22,   "reduced": 9.5},
+    "SK": {"standard": 23,   "reduced": 10}
+  }
+}

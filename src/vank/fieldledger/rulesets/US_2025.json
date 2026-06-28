@@ -1,0 +1,80 @@
+{
+  "kind": "tax-ruleset",
+  "jurisdiction": "US",
+  "fiscal_year": 2025,
+  "entity_types": ["C-Corp", "individual"],
+  "zero_cit": false,
+  "parameters": {
+    "corporate_income_tax": {
+      "key": "corporate_income_tax",
+      "label": "US Federal Corporate Income Tax (TCJA flat)",
+      "bracket_type": "flat_rate",
+      "brackets": [],
+      "flat_rate": 0.21,
+      "currency": "USD",
+      "notes": "Flat 21% since Tax Cuts and Jobs Act 2017; IRC §11"
+    },
+    "income_tax": {
+      "key": "income_tax",
+      "label": "US Federal Individual Income Tax (single filer 2025)",
+      "bracket_type": "marginal_rate",
+      "brackets": [
+        {"threshold": 0,      "rate": 0.10, "bracket_type": "marginal_rate"},
+        {"threshold": 11925,  "rate": 0.12, "bracket_type": "marginal_rate"},
+        {"threshold": 48475,  "rate": 0.22, "bracket_type": "marginal_rate"},
+        {"threshold": 103350, "rate": 0.24, "bracket_type": "marginal_rate"},
+        {"threshold": 197300, "rate": 0.32, "bracket_type": "marginal_rate"},
+        {"threshold": 250525, "rate": 0.35, "bracket_type": "marginal_rate"},
+        {"threshold": 626350, "rate": 0.37, "bracket_type": "marginal_rate"}
+      ],
+      "flat_rate": null,
+      "currency": "USD",
+      "notes": "2025 inflation-adjusted brackets (Rev. Proc. 2024-40). MFJ thresholds are doubled."
+    },
+    "payroll_employee": {
+      "key": "payroll_employee",
+      "label": "US Payroll Tax – Employee (FICA)",
+      "bracket_type": "flat_rate",
+      "brackets": [],
+      "flat_rate": 0.0765,
+      "currency": "USD",
+      "notes": "Social Security 6.2% (wage base $176,100) + Medicare 1.45%; simplified as combined flat rate"
+    },
+    "payroll_employer": {
+      "key": "payroll_employer",
+      "label": "US Payroll Tax – Employer (FICA matching)",
+      "bracket_type": "flat_rate",
+      "brackets": [],
+      "flat_rate": 0.0765,
+      "currency": "USD",
+      "notes": "Employer matching: SS 6.2% + Medicare 1.45%; IRC §3111"
+    },
+    "capital_gains_long": {
+      "key": "capital_gains_long",
+      "label": "US Federal Long-Term Capital Gains Tax (single filer 2025)",
+      "bracket_type": "marginal_rate",
+      "brackets": [
+        {"threshold": 0,      "rate": 0.00, "bracket_type": "marginal_rate"},
+        {"threshold": 47025,  "rate": 0.15, "bracket_type": "marginal_rate"},
+        {"threshold": 518900, "rate": 0.20, "bracket_type": "marginal_rate"}
+      ],
+      "flat_rate": null,
+      "currency": "USD",
+      "notes": "2025 LTCG brackets (Rev. Proc. 2024-40); excludes 3.8% NIIT"
+    },
+    "federal_unemployment": {
+      "key": "federal_unemployment",
+      "label": "US Federal Unemployment Tax (FUTA)",
+      "bracket_type": "flat_rate",
+      "brackets": [],
+      "flat_rate": 0.006,
+      "currency": "USD",
+      "notes": "Effective rate 0.6% after standard 5.4% state credit (gross 6.0% on first $7,000 wages); IRC §3301"
+    }
+  },
+  "sources": [
+    "https://www.irs.gov/pub/irs-drop/rp-24-40.pdf",
+    "https://www.irs.gov/businesses/corporations/corporate-tax-rates",
+    "https://www.irs.gov/taxtopics/tc751"
+  ]
+}

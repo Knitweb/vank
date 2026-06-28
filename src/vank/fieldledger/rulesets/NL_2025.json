@@ -1,0 +1,85 @@
+{
+  "kind": "tax-ruleset",
+  "jurisdiction": "NL",
+  "fiscal_year": 2025,
+  "entity_types": ["company_bv", "individual", "sole_trader"],
+  "zero_cit": false,
+  "parameters": {
+    "corporate_income_tax": {
+      "key": "corporate_income_tax",
+      "label": "Vennootschapsbelasting (VPB) 2025",
+      "bracket_type": "marginal_rate",
+      "brackets": [
+        {"threshold": 0, "rate": 0.19, "bracket_type": "marginal_rate"},
+        {"threshold": 200000, "rate": 0.258, "bracket_type": "marginal_rate"}
+      ],
+      "flat_rate": null,
+      "currency": "EUR",
+      "notes": "VPB 2025: 19% t/m €200k, 25.8% daarboven"
+    },
+    "income_tax": {
+      "key": "income_tax",
+      "label": "Inkomstenbelasting + premies box 1 (IB) 2025",
+      "bracket_type": "marginal_rate",
+      "brackets": [
+        {"threshold": 0, "rate": 0.3697, "bracket_type": "marginal_rate"},
+        {"threshold": 75624, "rate": 0.495, "bracket_type": "marginal_rate"}
+      ],
+      "flat_rate": null,
+      "currency": "EUR",
+      "notes": "IB 2025 box 1: 36.97% t/m €75.624, 49.5% daarboven"
+    },
+    "payroll_employee": {
+      "key": "payroll_employee",
+      "label": "Loonheffing werknemer 2025",
+      "bracket_type": "marginal_rate",
+      "brackets": [
+        {"threshold": 0, "rate": 0.3697, "bracket_type": "marginal_rate"},
+        {"threshold": 75624, "rate": 0.495, "bracket_type": "marginal_rate"}
+      ],
+      "flat_rate": null,
+      "currency": "EUR",
+      "notes": "Vereenvoudigd: zelfde schijven als IB box 1"
+    },
+    "payroll_employer": {
+      "key": "payroll_employer",
+      "label": "Werkgeverslasten NL 2025",
+      "bracket_type": "flat_rate",
+      "brackets": [],
+      "flat_rate": 0.125,
+      "currency": "EUR",
+      "notes": "Geschatte werkgeverslasten: ~12.5% (WW/ZW/WAO/Zvw werkgeversdeel)"
+    },
+    "vat_standard": {
+      "key": "vat_standard",
+      "label": "BTW standaard 2025",
+      "bracket_type": "flat_rate",
+      "brackets": [],
+      "flat_rate": 0.21,
+      "currency": "EUR",
+      "notes": "Standaard BTW-tarief NL"
+    },
+    "vat_reduced": {
+      "key": "vat_reduced",
+      "label": "BTW verlaagd 2025",
+      "bracket_type": "flat_rate",
+      "brackets": [],
+      "flat_rate": 0.09,
+      "currency": "EUR",
+      "notes": "Verlaagd BTW-tarief NL (voeding, boeken, etc.)"
+    },
+    "dividend_withholding": {
+      "key": "dividend_withholding",
+      "label": "Dividendbelasting NL 2025",
+      "bracket_type": "flat_rate",
+      "brackets": [],
+      "flat_rate": 0.15,
+      "currency": "EUR",
+      "notes": "Dividendbelasting 15%"
+    }
+  },
+  "sources": [
+    "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/belastingdienst/zakelijk/winst/vennootschapsbelasting/",
+    "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/belastingdienst/prive/inkomstenbelasting/"
+  ]
+}

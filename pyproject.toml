@@ -22,7 +22,7 @@ vank-poker = "vank.poker_server:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-vank = ["static/*.html"]
+vank = ["static/*.html", "fieldledger/rulesets/*.json"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

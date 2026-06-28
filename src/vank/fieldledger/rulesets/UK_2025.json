@@ -1,0 +1,95 @@
+{
+  "kind": "tax-ruleset",
+  "jurisdiction": "GB",
+  "fiscal_year": 2025,
+  "fiscal_year_start_month": 4,
+  "entity_types": ["company_ltd", "individual"],
+  "zero_cit": false,
+  "parameters": {
+    "corporate_income_tax": {
+      "key": "corporate_income_tax",
+      "label": "UK Corporation Tax 2025/26",
+      "bracket_type": "marginal_rate",
+      "brackets": [
+        {"threshold": 0,      "rate": 0.19, "bracket_type": "marginal_rate"},
+        {"threshold": 250000, "rate": 0.25, "bracket_type": "marginal_rate"}
+      ],
+      "flat_rate": null,
+      "currency": "GBP",
+      "notes": "Small profits rate 19% (≤£50k), main rate 25% (>£250k). Simplified as two brackets; marginal relief (MR) applies between £50k–£250k. Finance Act 2023."
+    },
+    "income_tax": {
+      "key": "income_tax",
+      "label": "UK Income Tax 2025/26",
+      "bracket_type": "marginal_rate",
+      "brackets": [
+        {"threshold": 0,      "rate": 0.00, "bracket_type": "marginal_rate"},
+        {"threshold": 12570,  "rate": 0.20, "bracket_type": "marginal_rate"},
+        {"threshold": 50270,  "rate": 0.40, "bracket_type": "marginal_rate"},
+        {"threshold": 125140, "rate": 0.45, "bracket_type": "marginal_rate"}
+      ],
+      "flat_rate": null,
+      "currency": "GBP",
+      "notes": "Personal allowance £12,570 (0%); basic rate 20% to £50,270; higher rate 40% to £125,140; additional rate 45% above. Allowance tapers to zero above £100k."
+    },
+    "payroll_employee": {
+      "key": "payroll_employee",
+      "label": "UK NIC Employee Class 1 2025/26",
+      "bracket_type": "marginal_rate",
+      "brackets": [
+        {"threshold": 0,     "rate": 0.00, "bracket_type": "marginal_rate"},
+        {"threshold": 12570, "rate": 0.08, "bracket_type": "marginal_rate"},
+        {"threshold": 50270, "rate": 0.02, "bracket_type": "marginal_rate"}
+      ],
+      "flat_rate": null,
+      "currency": "GBP",
+      "notes": "Employee Class 1 NIC: 0% below Primary Threshold (£12,570/yr); 8% on £12,570–£50,270; 2% above Upper Earnings Limit (£50,270). Autumn Budget 2024."
+    },
+    "payroll_employer": {
+      "key": "payroll_employer",
+      "label": "UK NIC Employer Class 1 2025/26",
+      "bracket_type": "marginal_rate",
+      "brackets": [
+        {"threshold": 0,    "rate": 0.00, "bracket_type": "marginal_rate"},
+        {"threshold": 5000, "rate": 0.15, "bracket_type": "marginal_rate"}
+      ],
+      "flat_rate": null,
+      "currency": "GBP",
+      "notes": "Employer Class 1 NIC: 15% on earnings above Secondary Threshold £5,000/yr (from April 2025, Autumn Budget 2024; previously £9,100). No upper earnings limit."
+    },
+    "vat_standard": {
+      "key": "vat_standard",
+      "label": "UK VAT Standard Rate 2025/26",
+      "bracket_type": "flat_rate",
+      "brackets": [],
+      "flat_rate": 0.20,
+      "currency": "GBP",
+      "notes": "Standard VAT rate 20%; registration threshold £90,000 (2025)."
+    },
+    "vat_reduced": {
+      "key": "vat_reduced",
+      "label": "UK VAT Reduced Rate 2025/26",
+      "bracket_type": "flat_rate",
+      "brackets": [],
+      "flat_rate": 0.05,
+      "currency": "GBP",
+      "notes": "Reduced VAT rate 5% (domestic energy, children's car seats, etc.). VATA 1994 Sch 7A."
+    },
+    "dividend_tax": {
+      "key": "dividend_tax",
+      "label": "UK Dividend Tax Basic Rate 2025/26",
+      "bracket_type": "flat_rate",
+      "brackets": [],
+      "flat_rate": 0.0875,
+      "currency": "GBP",
+      "notes": "Basic rate dividend tax 8.75% (applies within basic-rate band after £500 dividend allowance). Higher rate 33.75%, additional rate 39.35% not modelled here."
+    }
+  },
+  "sources": [
+    "https://www.gov.uk/corporation-tax-rates",
+    "https://www.gov.uk/income-tax-rates",
+    "https://www.gov.uk/national-insurance/how-much-you-pay",
+    "https://www.gov.uk/vat-rates",
+    "https://www.gov.uk/tax-on-dividends"
+  ]
+}

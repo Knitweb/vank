@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FieldLedger — Offline P2P Accounting</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#0d1117;color:#c9d1d9;font-size:13px}
+.tabs{display:flex;background:#161b22;border-bottom:1px solid #30363d;flex-wrap:wrap;padding:0 8px}
+.tab{padding:10px 14px;cursor:pointer;border-bottom:2px solid transparent;color:#8b949e;white-space:nowrap;user-select:none}
+.tab.active{color:#6c63ff;border-bottom-color:#6c63ff}
+.panel{display:none;padding:16px;max-width:1100px;margin:0 auto}
+.panel.active{display:block}
+.card{background:#161b22;border:1px solid #30363d;border-radius:6px;padding:12px;margin-bottom:10px}
+label{display:block;margin-bottom:3px;color:#8b949e;font-size:11px}
+input,select,textarea{width:100%;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;
+  padding:6px 8px;border-radius:4px;font-size:12px;margin-bottom:8px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:#6c63ff}
+textarea{font-family:monospace;font-size:11px;resize:vertical}
+button{background:#6c63ff;color:#fff;border:none;padding:6px 12px;border-radius:4px;
+  cursor:pointer;font-size:12px;margin-right:4px;margin-bottom:4px}
+button.sec{background:#21262d;border:1px solid #30363d;color:#c9d1d9}
+button.danger{background:#da3633;border:none;color:#fff}
+table{width:100%;border-collapse:collapse}
+th,td{padding:5px 8px;text-align:left;border-bottom:1px solid #21262d;font-size:12px}
+th{color:#8b949e;font-weight:500;background:#0d1117}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+h3{color:#6c63ff;margin-bottom:8px;font-size:13px;font-weight:600}
+.total{color:#6c63ff;font-weight:bold}
+.hint{color:#8b949e;font-size:11px;margin-top:-4px;margin-bottom:8px}
+.row{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap}
+.warn{color:#f0883e}
+.ok{color:#3fb950}
+@media(max-width:700px){.g2,.g3{grid-template-columns:1fr}}
+@media print{.tabs,.no-print{display:none!important}.panel{display:block!important;padding:0}}
+</style>
+</head>
+<body>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab(0)">Entity / Entiteit</div>
+  <div class="tab" onclick="showTab(1)">Tax / Belasting</div>
+  <div class="tab" onclick="showTab(2)">Payroll / Loon</div>
+  <div class="tab" onclick="showTab(3)">Ledger / Grootboek</div>
+  <div class="tab" onclick="showTab(4)">Vault / Kluis</div>
+  <div class="tab" onclick="showTab(5)">Filing / Aangifte</div>
+</div>
+
+<!-- TAB 0: ENTITY -->
+<div class="panel active" id="p0">
+  <div class="g2">
+    <div class="card">
+      <h3>Entiteit / Entity</h3>
+      <label>Juridische naam / Legal name</label>
+      <input id="e_name" placeholder="e.g. Acme B.V.">
+      <label>Type entiteit / Entity type</label>
+      <select id="e_type">
+        <option>BV</option><option>Ltd</option><option>LLC</option><option>Corp</option>
+        <option>Individual</option><option>ZZP</option><option>VOF</option><option>Foundation</option>
+      </select>
+      <label>Jurisdictie / Jurisdiction (ISO country code)</label>
+      <input id="e_jur" placeholder="NL / US / GB / DE">
+      <label>KvK / Registration number</label>
+      <input id="e_reg" placeholder="12345678">
+      <label>BTW / VAT number</label>
+      <input id="e_vat" placeholder="NL123456789B01">
+      <label>Boekjaar start / Fiscal year start month (1–12)</label>
+      <input id="e_fy" type="number" min="1" max="12" placeholder="1">
+      <button onclick="saveEntity()">Opslaan / Save</button>
+    </div>
+    <div class="card">
+      <h3>Samenvatting / Entity Summary</h3>
+      <div id="entity_summary"><em style="color:#8b949e">No entity saved yet.</em></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 1: TAX CALCULATOR -->
+<div class="panel" id="p1">
+  <div class="g2">
+    <div class="card">
+      <h3>Invoer / Input</h3>
+      <label>Jurisdictie / Jurisdiction</label>
+      <select id="t_jur">
+        <option value="NL">NL — Netherlands</option>
+        <option value="US">US — United States</option>
+        <option value="GB">GB — United Kingdom</option>
+      </select>
+      <label>Jaar / Year</label>
+      <input id="t_year" type="number" value="2025">
+      <label>Brutowinst / Gross profit</label>
+      <input id="t_gp" type="number" placeholder="0">
+      <label>Belastbare winst / Taxable income</label>
+      <input id="t_ti" type="number" placeholder="0">
+      <label>Bruto salaris / Gross salary (DGA / self)</label>
+      <input id="t_gs" type="number" placeholder="0">
+      <label>BTW-omzet / VAT turnover</label>
+      <input id="t_vt" type="number" placeholder="0">
+      <button onclick="calcTax()">Berekenen / Calculate</button>
+    </div>
+    <div class="card">
+      <h3>Belastingberekening / Tax Breakdown</h3>
+      <div id="tax_result"><em style="color:#8b949e">Fill fields and calculate.</em></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2: PAYROLL -->
+<div class="panel" id="p2">
+  <div class="card no-print">
+    <h3>Medewerkers / Employees</h3>
+    <div class="g3">
+      <div><label>Naam / Name</label><input id="emp_name" placeholder="Jan Jansen"></div>
+      <div><label>Jurisdictie</label>
+        <select id="emp_jur"><option>NL</option><option>US</option><option>GB</option></select>
+      </div>
+      <div><label>Jaarsalaris / Annual salary</label><input id="emp_sal" type="number" placeholder="50000"></div>
+      <div><label>Pensioen% / Pension%</label><input id="emp_pen" type="number" placeholder="5"></div>
+      <div style="padding-top:18px"><button onclick="addEmployee()">Toevoegen / Add</button></div>
+    </div>
+    <table id="emp_table">
+      <tr><th>Naam</th><th>Jur</th><th>Jaarsalaris</th><th>Pensioen%</th><th></th></tr>
+    </table>
+  </div>
+  <div class="card no-print">
+    <h3>Salarisrun / Payroll Run</h3>
+    <div class="row">
+      <div style="width:180px"><label>Maand / Month</label><input id="pr_month" type="month" value="2025-01"></div>
+      <div style="padding-top:18px"><button onclick="runPayroll()">Run Payroll</button></div>
+    </div>
+  </div>
+  <div id="payslips"></div>
+</div>
+
+<!-- TAB 3: LEDGER -->
+<div class="panel" id="p3">
+  <div class="card no-print">
+    <h3>Journaalpost / Journal Entry</h3>
+    <div class="g3">
+      <div><label>Datum / Date</label><input id="j_date" type="date"></div>
+      <div><label>Omschrijving / Description</label><input id="j_desc" placeholder="Inkoop materialen"></div>
+      <div><label>Bedrag / Amount</label><input id="j_amt" type="number" step="0.01" placeholder="0.00"></div>
+      <div><label>Debet rekening / Debit account</label><input id="j_deb" placeholder="1000 Inkoop"></div>
+      <div><label>Credit rekening / Credit account</label><input id="j_cred" placeholder="1100 Bank"></div>
+    </div>
+    <button onclick="addEntry()">Boeken / Post</button>
+    <button class="sec" onclick="importCSV()">CSV importeren / Import CSV</button>
+    <button class="sec" onclick="exportJSON()">Export JSON</button>
+    <input id="csv_file" type="file" accept=".csv" style="display:none" onchange="handleCSV(event)">
+  </div>
+  <div class="g2">
+    <div class="card">
+      <h3>Journaal / Journal</h3>
+      <div style="overflow-x:auto">
+        <table id="journal_table">
+          <tr><th>Datum</th><th>Omschrijving</th><th>Debet</th><th>Credit</th><th>Bedrag</th><th></th></tr>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Proefbalans / Trial Balance</h3>
+      <table id="trial_table">
+        <tr><th>Rekening / Account</th><th>Debet</th><th>Credit</th></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 4: VAULT -->
+<div class="panel" id="p4">
+  <div class="g2">
+    <div class="card">
+      <h3>Kluis beheer / Vault Management</h3>
+      <div id="vault_set_ui">
+        <label>Nieuw wachtwoord / New password</label>
+        <input id="v_pw" type="password" placeholder="Set vault password">
+        <label>Hint (plaintext — zichtbaar / visible)</label>
+        <input id="v_hint_in" placeholder="Password hint">
+        <div class="hint">Note: values stored with btoa obfuscation + password binding. For production use real AES-GCM (SubtleCrypto).</div>
+        <button onclick="setVaultPw()">Wachtwoord instellen / Set password</button>
+      </div>
+      <div id="vault_lock_ui" style="display:none">
+        <label>Wachtwoord / Password</label>
+        <input id="v_unlock_pw" type="password" placeholder="Enter password">
+        <button onclick="unlockVault()">Ontgrendelen / Unlock</button>
+        <button class="danger" onclick="lockVault()">Vergrendelen / Lock</button>
+      </div>
+      <hr style="border-color:#30363d;margin:10px 0">
+      <div id="vault_entry_ui" style="display:none">
+        <label>Sleutel / Key name</label><input id="v_key" placeholder="API key name">
+        <label>Soort / Kind</label>
+        <select id="v_kind">
+          <option>API Key</option><option>Password</option><option>Certificate</option>
+          <option>Seed phrase</option><option>Document</option><option>Other</option>
+        </select>
+        <label>Waarde / Value</label>
+        <input id="v_val" type="password" placeholder="secret value">
+        <button onclick="addVaultEntry()">Toevoegen / Add</button>
+        <button class="sec" onclick="exportVault()">Export backup</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Kluis inhoud / Vault Contents</h3>
+      <div id="vault_status" class="warn" style="margin-bottom:6px">Locked / Vergrendeld</div>
+      <div id="v_hint_show" class="hint"></div>
+      <table id="vault_table">
+        <tr><th>Sleutel / Key</th><th>Soort</th><th>Tijdstip</th><th></th></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 5: FILING -->
+<div class="panel" id="p5">
+  <div class="card no-print">
+    <h3>Aangifte genereren / Generate Filing</h3>
+    <div class="g3">
+      <div><label>Entiteit / Entity</label><select id="f_entity"></select></div>
+      <div><label>Periode / Period</label><input id="f_period" type="month" value="2025-01"></div>
+      <div><label>Formaat / Format</label>
+        <select id="f_format"><option value="json">JSON</option><option value="saft">SAF-T XML</option></select>
+      </div>
+    </div>
+    <button onclick="generateFiling()">Genereren / Generate</button>
+    <button class="sec" onclick="downloadFiling()">Downloaden / Download</button>
+  </div>
+  <div class="card">
+    <h3>Deadlines / Filing Deadlines</h3>
+    <table>
+      <tr><th>Jurisdictie</th><th>Belasting / Tax</th><th>Deadline</th></tr>
+      <tr><td>NL</td><td>VPB (Vennootschapsbelasting)</td><td class="warn">1 juni / 1 June</td></tr>
+      <tr><td>NL</td><td>BTW (kwartaalaangifte)</td><td>1 maand na kwartaalende</td></tr>
+      <tr><td>NL</td><td>IB (Inkomstenbelasting)</td><td>1 mei / 1 May</td></tr>
+      <tr><td>US</td><td>Corporate Tax (Form 1120)</td><td class="warn">15 April</td></tr>
+      <tr><td>US</td><td>S-Corp / Partnership (1120-S / 1065)</td><td>15 March</td></tr>
+      <tr><td>GB</td><td>Corporation Tax (CT600)</td><td class="warn">9 months after year end</td></tr>
+      <tr><td>GB</td><td>VAT return</td><td>1 month + 7 days after period</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h3>Preview</h3>
+    <textarea id="filing_preview" rows="14" placeholder="Generated filing will appear here..."></textarea>
+  </div>
+</div>
+
+<script>
+// ── Local storage helpers ──────────────────────────────────────────────────
+const LS = {
+  get: k => { try { return JSON.parse(localStorage.getItem('fl_' + k)); } catch { return null; } },
+  set: (k, v) => localStorage.setItem('fl_' + k, JSON.stringify(v)),
+};
+let vaultUnlocked = false, vaultPw = '';
+
+// ── Tab navigation ─────────────────────────────────────────────────────────
+function showTab(i) {
+  document.querySelectorAll('.panel').forEach((p, j) => p.classList.toggle('active', j === i));
+  document.querySelectorAll('.tab').forEach((t, j) => t.classList.toggle('active', j === i));
+  if (i === 2) renderEmployees();
+  if (i === 3) renderLedger();
+  if (i === 4) renderVault();
+  if (i === 5) initFiling();
+}
+
+// ── Entity ─────────────────────────────────────────────────────────────────
+function saveEntity() {
+  const e = {
+    name: document.getElementById('e_name').value.trim(),
+    type: document.getElementById('e_type').value,
+    jur:  document.getElementById('e_jur').value.trim().toUpperCase(),
+    reg:  document.getElementById('e_reg').value.trim(),
+    vat:  document.getElementById('e_vat').value.trim(),
+    fy:   document.getElementById('e_fy').value || '1',
+  };
+  LS.set('entity', e);
+  renderEntitySummary();
+}
+
+function renderEntitySummary() {
+  const e = LS.get('entity');
+  const d = document.getElementById('entity_summary');
+  if (!e || !e.name) { d.innerHTML = '<em style="color:#8b949e">No entity saved yet.</em>'; return; }
+  d.innerHTML = `<table>
+    <tr><td style="color:#8b949e;width:150px">Naam / Name</td><td class="total">${e.name}</td></tr>
+    <tr><td style="color:#8b949e">Type</td><td>${e.type}</td></tr>
+    <tr><td style="color:#8b949e">Jurisdictie</td><td>${e.jur}</td></tr>
+    <tr><td style="color:#8b949e">KvK / Reg nr</td><td>${e.reg}</td></tr>
+    <tr><td style="color:#8b949e">BTW / VAT nr</td><td>${e.vat}</td></tr>
+    <tr><td style="color:#8b949e">Boekjaar start</td><td>Month ${e.fy}</td></tr>
+  </table>`;
+  // Pre-fill form fields
+  const map = { e_name:'name', e_jur:'jur', e_reg:'reg', e_vat:'vat', e_fy:'fy' };
+  for (const [id, key] of Object.entries(map)) {
+    const el = document.getElementById(id);
+    if (el) el.value = e[key] || '';
+  }
+  document.getElementById('e_type').value = e.type || 'BV';
+}
+
+// ── Tax rates (hardcoded for offline use) ──────────────────────────────────
+const TAX = {
+  NL: {
+    corp:      [{up:200000,r:0.19},{up:Infinity,r:0.258}],
+    loonhef:   [{up:38441,r:0.3597},{up:75518,r:0.3697},{up:Infinity,r:0.4950}],
+    zvw: 0.0565, ww: 0.0276, wia: 0.0113, vat: 0.21,
+  },
+  US: {
+    corp:     [{up:Infinity,r:0.21}],
+    state:    0.06,
+    income:   [{up:11600,r:0.10},{up:47150,r:0.12},{up:100525,r:0.22},
+               {up:191950,r:0.24},{up:243725,r:0.32},{up:609350,r:0.35},{up:Infinity,r:0.37}],
+    se:       0.153,
+    vat:      0.085,
+  },
+  GB: {
+    corp:     [{up:50000,r:0.19},{up:250000,r:0.2625},{up:Infinity,r:0.25}],
+    income:   [{up:12570,r:0},{up:50270,r:0.20},{up:125140,r:0.40},{up:Infinity,r:0.45}],
+    nie: 0.08, nier: 0.138, vat: 0.20,
+  },
+};
+
+function brackets(amount, tiers) {
+  let tax = 0, prev = 0;
+  for (const t of tiers) {
+    if (amount <= prev) break;
+    tax += (Math.min(amount, t.up) - prev) * t.r;
+    prev = t.up;
+    if (amount <= t.up) break;
+  }
+  return tax;
+}
+
+function calcTax() {
+  const jur = document.getElementById('t_jur').value;
+  const ti  = +document.getElementById('t_ti').value || 0;
+  const gs  = +document.getElementById('t_gs').value || 0;
+  const vt  = +document.getElementById('t_vt').value || 0;
+  const r   = TAX[jur];
+  const rows = [];
+  let total = 0;
+
+  if (jur === 'NL') {
+    const cit = brackets(ti, r.corp);   rows.push(['VPB / Corp tax', ti, '19% / 25.8%', cit]);
+    const lh  = brackets(gs, r.loonhef); rows.push(['Loonheffing / Withholding', gs, '35.97–49.5%', lh]);
+    const zvw = gs * r.zvw;              rows.push(['ZVW bijdrage', gs, '5.65%', zvw]);
+    const ww  = gs * r.ww;              rows.push(['WW werkgever', gs, '2.76%', ww]);
+    const wia = gs * r.wia;             rows.push(['WIA werkgever', gs, '1.13%', wia]);
+    const vat = vt * r.vat;             rows.push(['BTW / VAT (21%)', vt, '21%', vat]);
+    total = cit + lh + zvw + ww + wia + vat;
+  } else if (jur === 'US') {
+    const cit = brackets(ti, r.corp);  rows.push(['Federal Corp Tax', ti, '21%', cit]);
+    const st  = ti * r.state;          rows.push(['State Corp Tax (avg)', ti, '6%', st]);
+    const se  = gs * r.se;             rows.push(['Self-Employment Tax', gs, '15.3%', se]);
+    const pit = brackets(gs, r.income);rows.push(['Federal Income Tax', gs, '10–37%', pit]);
+    const vat = vt * r.vat;            rows.push(['Sales Tax (avg)', vt, '8.5%', vat]);
+    total = cit + st + se + pit + vat;
+  } else if (jur === 'GB') {
+    const cit = brackets(ti, r.corp);  rows.push(['Corporation Tax', ti, '19–25%', cit]);
+    const pit = brackets(gs, r.income);rows.push(['Income Tax', gs, '0–45%', pit]);
+    const nie = gs * r.nie;            rows.push(['NI Employee', gs, '8%', nie]);
+    const nier= gs * r.nier;           rows.push(['NI Employer', gs, '13.8%', nier]);
+    const vat = vt * r.vat;            rows.push(['VAT (20%)', vt, '20%', vat]);
+    total = cit + pit + nie + nier + vat;
+  }
+
+  const effRate = ((total / (ti + gs || 1)) * 100).toFixed(1);
+  let html = `<table><tr><th>Post</th><th>Grondslag/Base</th><th>Tarief/Rate</th><th>Bedrag/Amount</th></tr>`;
+  for (const [lbl, base, rate, amt] of rows)
+    html += `<tr><td>${lbl}</td><td>${fmt(base)}</td><td>${rate}</td><td>${fmt(amt)}</td></tr>`;
+  html += `<tr><td colspan="3" class="total">Totaal / Total tax</td><td class="total">${fmt(total)}</td></tr>
+    <tr><td colspan="3" style="color:#8b949e">Effectief tarief / Effective rate</td><td>${effRate}%</td></tr></table>`;
+  document.getElementById('tax_result').innerHTML = html;
+}
+
+// ── Payroll ────────────────────────────────────────────────────────────────
+function emps() { return LS.get('employees') || []; }
+function saveEmps(a) { LS.set('employees', a); }
+
+function addEmployee() {
+  const e = {
+    id:      Date.now(),
+    name:    document.getElementById('emp_name').value.trim(),
+    jur:     document.getElementById('emp_jur').value,
+    salary:  +document.getElementById('emp_sal').value,
+    pension: +document.getElementById('emp_pen').value || 0,
+  };
+  if (!e.name || !e.salary) { alert('Name and salary required.'); return; }
+  const a = emps(); a.push(e); saveEmps(a);
+  document.getElementById('emp_name').value = '';
+  document.getElementById('emp_sal').value = '';
+  renderEmployees();
+}
+
+function removeEmployee(id) { saveEmps(emps().filter(e => e.id !== id)); renderEmployees(); }
+
+function renderEmployees() {
+  const t = document.getElementById('emp_table');
+  if (!t) return;
+  let h = '<tr><th>Naam</th><th>Jur</th><th>Jaarsalaris</th><th>Pensioen%</th><th></th></tr>';
+  for (const e of emps())
+    h += `<tr><td>${e.name}</td><td>${e.jur}</td><td>${fmt(e.salary)}</td><td>${e.pension}%</td>
+          <td><button class="danger" onclick="removeEmployee(${e.id})">✕</button></td></tr>`;
+  t.innerHTML = h;
+}
+
+function runPayroll() {
+  const month = document.getElementById('pr_month').value;
+  const list  = emps();
+  if (!list.length) { alert('No employees added.'); return; }
+  let html = '';
+  for (const emp of list) {
+    const gross = emp.salary / 12;
+    const pension = gross * (emp.pension / 100);
+    const taxable = gross - pension;
+    let wh = 0, ss = 0;
+    if (emp.jur === 'NL') {
+      wh = brackets(taxable * 12, TAX.NL.loonhef) / 12;
+      ss = (TAX.NL.zvw + TAX.NL.ww + TAX.NL.wia) * gross;
+    } else if (emp.jur === 'US') {
+      wh = brackets(gross * 12, TAX.US.income) / 12;
+      ss = 0.0765 * gross;
+    } else if (emp.jur === 'GB') {
+      wh = brackets(gross * 12, TAX.GB.income) / 12;
+      ss = TAX.GB.nie * gross;
+    }
+    const net = gross - wh - ss - pension;
+    html += `<div class="card" style="break-inside:avoid;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <h3>${emp.name} — Loonstrook / Payslip</h3>
+        <button class="sec no-print" onclick="window.print()">Print</button>
+      </div>
+      <div class="hint">${month} · ${emp.jur} · ${emp.type || emp.jur}</div>
+      <table>
+        <tr><td>Bruto salaris / Gross salary (mnd)</td><td style="text-align:right">${fmt(gross)}</td></tr>
+        <tr><td>Pensioen / Pension (${emp.pension}%)</td><td style="text-align:right">− ${fmt(pension)}</td></tr>
+        <tr><td>Loonheffing / Withholding tax</td><td style="text-align:right">− ${fmt(wh)}</td></tr>
+        <tr><td>Sociale lasten / Social security</td><td style="text-align:right">− ${fmt(ss)}</td></tr>
+        <tr><th>Netto / Net pay</th><th style="text-align:right;color:#6c63ff">${fmt(net)}</th></tr>
+      </table>
+    </div>`;
+  }
+  document.getElementById('payslips').innerHTML = html;
+}
+
+// ── Ledger ─────────────────────────────────────────────────────────────────
+function ledgerEntries() { return LS.get('ledger') || []; }
+function saveLedger(a) { LS.set('ledger', a); }
+
+function addEntry() {
+  const e = {
+    id:   Date.now(),
+    date: document.getElementById('j_date').value,
+    desc: document.getElementById('j_desc').value.trim(),
+    deb:  document.getElementById('j_deb').value.trim(),
+    cred: document.getElementById('j_cred').value.trim(),
+    amt:  +document.getElementById('j_amt').value,
+  };
+  if (!e.date || !e.amt) { alert('Date and amount required.'); return; }
+  const a = ledgerEntries(); a.push(e); saveLedger(a);
+  ['j_desc','j_deb','j_cred','j_amt'].forEach(id => document.getElementById(id).value = '');
+  renderLedger();
+}
+
+function removeEntry(id) { saveLedger(ledgerEntries().filter(e => e.id !== id)); renderLedger(); }
+
+function renderLedger() {
+  const entries = ledgerEntries();
+  const jt = document.getElementById('journal_table');
+  if (!jt) return;
+  let h = '<tr><th>Datum</th><th>Omschrijving</th><th>Debet</th><th>Credit</th><th>Bedrag</th><th></th></tr>';
+  for (const e of entries)
+    h += `<tr><td>${e.date}</td><td>${e.desc}</td><td>${e.deb}</td><td>${e.cred}</td>
+          <td>${fmt(e.amt)}</td><td><button class="danger" onclick="removeEntry(${e.id})">✕</button></td></tr>`;
+  jt.innerHTML = h;
+  renderTrialBalance(entries);
+}
+
+function renderTrialBalance(entries) {
+  const accs = {};
+  for (const e of entries) {
+    if (!accs[e.deb])  accs[e.deb]  = {d:0, c:0};
+    if (!accs[e.cred]) accs[e.cred] = {d:0, c:0};
+    accs[e.deb].d  += e.amt;
+    accs[e.cred].c += e.amt;
+  }
+  let td = 0, tc = 0;
+  let h = '<tr><th>Rekening / Account</th><th>Debet</th><th>Credit</th></tr>';
+  for (const [acc, v] of Object.entries(accs)) {
+    h += `<tr><td>${acc}</td><td>${fmt(v.d)}</td><td>${fmt(v.c)}</td></tr>`;
+    td += v.d; tc += v.c;
+  }
+  h += `<tr><th>Totaal</th><th class="total">${fmt(td)}</th><th class="total">${fmt(tc)}</th></tr>`;
+  document.getElementById('trial_table').innerHTML = h;
+}
+
+function importCSV() { document.getElementById('csv_file').click(); }
+
+function handleCSV(evt) {
+  const file = evt.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const lines = ev.target.result.split('\n').slice(1);
+    const entries = ledgerEntries();
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      const [date, desc, deb, cred, amt] = line.split(',').map(s => s.trim().replace(/^"|"$/g,''));
+      if (date && amt) entries.push({ id: Date.now() + Math.random(), date, desc, deb, cred, amt: +amt });
+    }
+    saveLedger(entries);
+    renderLedger();
+    alert('CSV imported / CSV geimporteerd');
+  };
+  reader.readAsText(file);
+}
+
+function exportJSON() {
+  const data = { entity: LS.get('entity'), ledger: ledgerEntries(), exported: new Date().toISOString() };
+  download('fieldledger_export.json', JSON.stringify(data, null, 2), 'application/json');
+}
+
+// ── Vault ──────────────────────────────────────────────────────────────────
+function setVaultPw() {
+  const pw   = document.getElementById('v_pw').value;
+  const hint = document.getElementById('v_hint_in').value;
+  if (!pw) { alert('Password required / Wachtwoord vereist'); return; }
+  LS.set('vault_hash', btoa(unescape(encodeURIComponent(pw + '::fieldledger_v1'))));
+  LS.set('vault_hint', hint);
+  vaultPw = pw; vaultUnlocked = true;
+  document.getElementById('vault_set_ui').style.display = 'none';
+  document.getElementById('vault_lock_ui').style.display = 'block';
+  document.getElementById('vault_entry_ui').style.display = 'block';
+  renderVault();
+}
+
+function unlockVault() {
+  const pw     = document.getElementById('v_unlock_pw').value;
+  const stored = LS.get('vault_hash');
+  if (stored && btoa(unescape(encodeURIComponent(pw + '::fieldledger_v1'))) === stored) {
+    vaultPw = pw; vaultUnlocked = true;
+    document.getElementById('vault_entry_ui').style.display = 'block';
+    renderVault();
+  } else { alert('Wrong password / Onjuist wachtwoord'); }
+}
+
+function lockVault() {
+  vaultPw = ''; vaultUnlocked = false;
+  document.getElementById('vault_entry_ui').style.display = 'none';
+  document.getElementById('v_unlock_pw').value = '';
+  renderVault();
+}
+
+function addVaultEntry() {
+  if (!vaultUnlocked) { alert('Unlock vault first'); return; }
+  const key = document.getElementById('v_key').value.trim();
+  const val = document.getElementById('v_val').value;
+  if (!key) { alert('Key name required'); return; }
+  const entry = {
+    id:   Date.now(),
+    key,
+    kind: document.getElementById('v_kind').value,
+    ts:   new Date().toISOString(),
+    enc:  btoa(unescape(encodeURIComponent(vaultPw + '::' + val))),
+  };
+  const a = LS.get('vault_entries') || [];
+  a.push(entry);
+  LS.set('vault_entries', a);
+  document.getElementById('v_key').value = '';
+  document.getElementById('v_val').value = '';
+  renderVault();
+}
+
+function removeVaultEntry(id) {
+  LS.set('vault_entries', (LS.get('vault_entries') || []).filter(e => e.id !== id));
+  renderVault();
+}
+
+function renderVault() {
+  const stored = LS.get('vault_hash');
+  if (stored) {
+    document.getElementById('vault_set_ui').style.display = 'none';
+    document.getElementById('vault_lock_ui').style.display = 'block';
+  }
+  if (vaultUnlocked) document.getElementById('vault_entry_ui').style.display = 'block';
+
+  const hint = LS.get('vault_hint');
+  document.getElementById('v_hint_show').textContent = hint ? 'Hint: ' + hint : '';
+  document.getElementById('vault_status').innerHTML = vaultUnlocked
+    ? '<span class="ok">Unlocked / Ontgrendeld</span>'
+    : '<span class="warn">Locked / Vergrendeld</span>';
+
+  const entries = LS.get('vault_entries') || [];
+  let h = '<tr><th>Sleutel / Key</th><th>Soort</th><th>Tijdstip</th><th></th></tr>';
+  for (const e of entries) {
+    const reveal = vaultUnlocked
+      ? ` <span style="color:#8b949e;font-size:10px">(${decodeURIComponent(escape(atob(e.enc))).split('::').slice(1).join('::').slice(0,20)}…)</span>`
+      : '';
+    h += `<tr><td>${e.key}${reveal}</td><td>${e.kind}</td><td>${e.ts.slice(0,16)}</td>
+          <td><button class="danger" onclick="removeVaultEntry(${e.id})">✕</button></td></tr>`;
+  }
+  document.getElementById('vault_table').innerHTML = h;
+}
+
+function exportVault() {
+  const data = {
+    vault_hash: LS.get('vault_hash'),
+    vault_hint: LS.get('vault_hint'),
+    entries:    LS.get('vault_entries') || [],
+    exported:   new Date().toISOString(),
+  };
+  download('fieldledger_vault_backup.json', JSON.stringify(data, null, 2), 'application/json');
+}
+
+// ── Filing ─────────────────────────────────────────────────────────────────
+let filingContent = '';
+
+function initFiling() {
+  const e   = LS.get('entity');
+  const sel = document.getElementById('f_entity');
+  sel.innerHTML = e && e.name
+    ? `<option value="${e.name}">${e.name} (${e.type})</option>`
+    : '<option value="">— no entity saved —</option>';
+}
+
+function generateFiling() {
+  const entity  = LS.get('entity') || {};
+  const period  = document.getElementById('f_period').value;
+  const format  = document.getElementById('f_format').value;
+  const entries = ledgerEntries().filter(e => e.date && e.date.startsWith(period.slice(0, 7)));
+
+  if (format === 'json') {
+    const data = {
+      schema:    'fieldledger-filing-v1',
+      entity,
+      period,
+      generated: new Date().toISOString(),
+      entries,
+      summary: {
+        totalDebit:  entries.reduce((s, e) => s + e.amt, 0),
+        entryCount:  entries.length,
+      },
+    };
+    filingContent = JSON.stringify(data, null, 2);
+  } else {
+    const ent = entries.map(e => `
+    <Transaction>
+      <TransactionDate>${e.date}</TransactionDate>
+      <Description>${(e.desc||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')}</Description>
+      <Amount>${(e.amt || 0).toFixed(2)}</Amount>
+      <DebitAccount>${e.deb || ''}</DebitAccount>
+      <CreditAccount>${e.cred || ''}</CreditAccount>
+    </Transaction>`).join('');
+    filingContent = `<?xml version="1.0" encoding="UTF-8"?>
+<AuditFile xmlns="urn:StandardAuditFile-Taxation-Financial:NL" version="2.0">
+  <Header>
+    <AuditFileVersion>2.0</AuditFileVersion>
+    <CompanyName>${(entity.name||'').replace(/&/g,'&amp;')}</CompanyName>
+    <RegistrationNumber>${entity.reg||''}</RegistrationNumber>
+    <TaxRegistrationNumber>${entity.vat||''}</TaxRegistrationNumber>
+    <SelectionStartDate>${period}-01</SelectionStartDate>
+    <SelectionEndDate>${period}-28</SelectionEndDate>
+    <CurrencyCode>EUR</CurrencyCode>
+    <GeneratedBy>FieldLedger offline</GeneratedBy>
+  </Header>
+  <GeneralLedger>${ent}
+  </GeneralLedger>
+</AuditFile>`;
+  }
+  document.getElementById('filing_preview').value = filingContent;
+}
+
+function downloadFiling() {
+  if (!filingContent) { alert('Generate first / Eerst genereren'); return; }
+  const fmt  = document.getElementById('f_format').value;
+  const per  = document.getElementById('f_period').value;
+  const ext  = fmt === 'json' ? 'json' : 'xml';
+  const mime = fmt === 'json' ? 'application/json' : 'application/xml';
+  download(`filing_${per}.${ext}`, filingContent, mime);
+}
+
+// ── Utilities ──────────────────────────────────────────────────────────────
+function fmt(n) {
+  return (n || 0).toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function download(filename, content, mime) {
+  const a = document.createElement('a');
+  a.href     = URL.createObjectURL(new Blob([content], { type: mime }));
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+renderEntitySummary(); renderEmployees(); renderLedger(); renderVault();
+document.getElementById('j_date').value = new Date().toISOString().slice(0, 10);
+</script>
+</body>
+</html>
