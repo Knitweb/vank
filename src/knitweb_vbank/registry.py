@@ -33,9 +33,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, Optional
 
 from knitweb.core import canonical, crypto
+
+from .validation import require_int as _require_int, require_text as _require_text
 
 __all__ = [
     "RegistrationKind",
@@ -52,19 +53,6 @@ class RegistrationKind(Enum):
     NATIONAL = "national"    # a national-identity registry id
     FREEPORT = "freeport"    # freedom-freeport: IMEI + email + ad-hoc proof of identity
 
-
-def _require_text(name: str, value: str) -> str:
-    if not isinstance(value, str) or not value:
-        raise TypeError(f"{name} must be a non-empty str")
-    return value
-
-
-def _require_int(name: str, value: int, *, minimum: int) -> int:
-    if not isinstance(value, int) or isinstance(value, bool):
-        raise TypeError(f"{name} must be int, not {type(value).__name__}")
-    if value < minimum:
-        raise ValueError(f"{name} must be >= {minimum} (got {value})")
-    return value
 
 
 def _digest(domain: str, *parts: str) -> str:
@@ -158,9 +146,9 @@ class WorldRegistry:
 
     def __init__(self, *, year: int) -> None:
         self.year = _require_int("year", year, minimum=0)
-        self._subjects: Dict[str, str] = {}        # subject -> world (dedup + assignment)
-        self._kinds: Dict[str, RegistrationKind] = {}
-        self._births: Dict[str, int] = {}          # world -> expected births this year
+        self._subjects: dict[str, str] = {}        # subject -> world (dedup + assignment)
+        self._kinds: dict[str, RegistrationKind] = {}
+        self._births: dict[str, int] = {}          # world -> expected births this year
 
     # -- registration -----------------------------------------------------------------
 
@@ -181,7 +169,7 @@ class WorldRegistry:
     def is_registered(self, subject: str) -> bool:
         return subject in self._subjects
 
-    def world_of(self, subject: str) -> Optional[str]:
+    def world_of(self, subject: str) -> str | None:
         return self._subjects.get(subject)
 
     # -- demographic projection -------------------------------------------------------
@@ -192,19 +180,19 @@ class WorldRegistry:
         _require_int("expected_births", expected_births, minimum=0)
         self._births[world] = expected_births
 
-    def registered_persons(self, world: Optional[str] = None) -> int:
+    def registered_persons(self, world: str | None = None) -> int:
         """Count of registered persons (all worlds, or one ``world``)."""
         if world is None:
             return len(self._subjects)
         return sum(1 for w in self._subjects.values() if w == world)
 
-    def expected_births(self, world: Optional[str] = None) -> int:
+    def expected_births(self, world: str | None = None) -> int:
         """Expected births this year (all worlds, or one ``world``)."""
         if world is None:
             return sum(self._births.values())
         return self._births.get(world, 0)
 
-    def subjects(self, world: Optional[str] = None) -> list[str]:
+    def subjects(self, world: str | None = None) -> list[str]:
         """All registered subject digests, optionally filtered to one ``world``."""
         if world is None:
             return list(self._subjects)
@@ -214,7 +202,7 @@ class WorldRegistry:
         """Every world that has either a registered person or a birth projection."""
         return sorted(set(self._subjects.values()) | set(self._births.keys()))
 
-    def max_vote_supply(self, world: Optional[str] = None) -> int:
+    def max_vote_supply(self, world: str | None = None) -> int:
         """The demographic vote cap: registered persons + expected births this year.
 
         Summed over all worlds (or restricted to one ``world``). Freeport registrations are

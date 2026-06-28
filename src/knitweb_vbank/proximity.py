@@ -23,25 +23,14 @@ from dataclasses import dataclass
 
 from knitweb.core import canonical
 
+from .validation import require_int as _require_int, require_text as _require_text
+
 __all__ = ["ProximityProof", "attest"]
 
 # Bluetooth RSSI is negative dBm: ~-30 touching, ~-60 same room, ~-90 edge of range.
 _MIN_DBM = -120
 _MAX_DBM = 0
 
-
-def _require_int(name: str, value: int, *, minimum: int, maximum: int | None = None) -> int:
-    if not isinstance(value, int) or isinstance(value, bool):
-        raise TypeError(f"{name} must be int, not {type(value).__name__}")
-    if value < minimum or (maximum is not None and value > maximum):
-        raise ValueError(f"{name} out of range (got {value})")
-    return value
-
-
-def _require_text(name: str, value: str) -> str:
-    if not isinstance(value, str) or not value:
-        raise TypeError(f"{name} must be a non-empty str")
-    return value
 
 
 @dataclass(frozen=True)

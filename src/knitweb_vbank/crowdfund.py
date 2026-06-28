@@ -26,12 +26,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Optional, Set, Tuple
 
 from knitweb.core import canonical
 from .proximity import ProximityProof
 from .registry import Registration
 from .recency import Decay, Vote, recency_tally
+from .validation import require_int as _require_int, require_text as _require_text
 from .votebank import VoteBank
 
 __all__ = ["CampaignStatus", "Pledge", "CampaignResult", "Campaign"]
@@ -44,21 +44,6 @@ class CampaignStatus(Enum):
     FUNDED = "funded"      # goal + breadth met at resolution → escrow released to beneficiary
     EXPIRED = "expired"    # not met at resolution → every backer refunded
 
-
-def _require_int(name: str, value: int, *, minimum: int, maximum: Optional[int] = None) -> int:
-    if not isinstance(value, int) or isinstance(value, bool):
-        raise TypeError(f"{name} must be int, not {type(value).__name__}")
-    if value < minimum:
-        raise ValueError(f"{name} must be >= {minimum} (got {value})")
-    if maximum is not None and value > maximum:
-        raise ValueError(f"{name} must be <= {maximum} (got {value})")
-    return value
-
-
-def _require_text(name: str, value: str) -> str:
-    if not isinstance(value, str) or not value:
-        raise TypeError(f"{name} must be a non-empty str")
-    return value
 
 
 @dataclass(frozen=True)
@@ -116,7 +101,7 @@ class Campaign:
         *,
         min_backers: int = 1,
         created: int = 0,
-        beacon: Optional[str] = None,
+        beacon: str | None = None,
         min_local_backers: int = 0,
         proximity_window: int = 0,
         min_rssi_dbm: int = -90,
@@ -141,10 +126,10 @@ class Campaign:
             raise ValueError("min_local_backers requires a beacon to attest presence against")
 
         self.status = CampaignStatus.OPEN
-        self._pledges: List[Pledge] = []
+        self._pledges: list[Pledge] = []
         self._backers: Set[str] = set()
         self._local_backers: Set[str] = set()
-        self._result: Optional[CampaignResult] = None
+        self._result: CampaignResult | None = None
 
     # -- backing ----------------------------------------------------------------------
 
@@ -154,8 +139,8 @@ class Campaign:
         amount: int,
         *,
         beat: int,
-        proximity: Optional[ProximityProof] = None,
-    ) -> Optional[Pledge]:
+        proximity: ProximityProof | None = None,
+    ) -> Pledge | None:
         """Back this campaign once with ``amount`` PLS-wei. None if this person already backed.
 
         Requires the campaign OPEN, the person **registered** in the bank's registry, and the
@@ -193,7 +178,7 @@ class Campaign:
         self._pledges.append(pledge)
         return pledge
 
-    def _verify_local(self, subject: str, beat: int, proximity: Optional[ProximityProof]) -> bool:
+    def _verify_local(self, subject: str, beat: int, proximity: ProximityProof | None) -> bool:
         """Validate a Bluetooth proximity proof; return whether the pledge counts as local."""
         if proximity is None:
             return False
@@ -230,7 +215,7 @@ class Campaign:
             and self.local_backers() >= self.min_local_backers
         )
 
-    def momentum(self, *, now: int, decay: Optional[Decay] = None) -> int:
+    def momentum(self, *, now: int, decay: Decay | None = None) -> int:
         """Recency-weighted backing: recent pledges weigh exponentially more (governance tally).
 
         Reuses :func:`knitweb_vbank.recency.recency_tally` (one-vote-per-subject already holds, since

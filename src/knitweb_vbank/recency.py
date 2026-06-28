@@ -25,7 +25,9 @@ it only counts votes some upstream produced (e.g. drawn from
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Optional
+from typing import Iterable
+
+from .validation import require_int as _require_int
 
 __all__ = ["Decay", "Vote", "WeightedTally", "recency_tally"]
 
@@ -33,13 +35,6 @@ __all__ = ["Decay", "Vote", "WeightedTally", "recency_tally"]
 # decay still leave meaningful integer resolution before flooring to 0.
 DEFAULT_SCALE = 1 << 20
 
-
-def _require_int(name: str, value: int, *, minimum: int) -> int:
-    if not isinstance(value, int) or isinstance(value, bool):
-        raise TypeError(f"{name} must be int, not {type(value).__name__}")
-    if value < minimum:
-        raise ValueError(f"{name} must be >= {minimum} (got {value})")
-    return value
 
 
 @dataclass(frozen=True)
@@ -55,7 +50,7 @@ class Decay:
     num: int = 1
     den: int = 2
     scale: int = DEFAULT_SCALE
-    horizon: Optional[int] = None
+    horizon: int | None = None
 
     def __post_init__(self) -> None:
         _require_int("num", self.num, minimum=0)
@@ -100,7 +95,7 @@ class WeightedTally:
     """The exponentially-weighted outcome (all integer weights)."""
 
     weights: Dict[str, int]   # choice -> summed recency-weighted weight
-    winner: Optional[str]     # highest-weight choice; None iff no vote carried weight
+    winner: str | None     # highest-weight choice; None iff no vote carried weight
     total_weight: int
     n: int                    # number of (unique-subject) votes counted
 
@@ -113,7 +108,7 @@ class WeightedTally:
 
 
 def recency_tally(
-    votes: Iterable[Vote], *, now: int, decay: Optional[Decay] = None
+    votes: Iterable[Vote], *, now: int, decay: Decay | None = None
 ) -> WeightedTally:
     """Aggregate ``votes`` at tally instant ``now``, weighting recent votes exponentially.
 
