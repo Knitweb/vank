@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib, json
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
 __all__ = ["BracketType", "TaxBracket", "TaxParameter", "TaxRuleset"]
@@ -122,5 +123,5 @@ class TaxRuleset:
 
     @staticmethod
     def load_from_file(path: str) -> "TaxRuleset":
-        import json as _json
-        return TaxRuleset.from_dict(_json.load(open(path)))
+        with Path(path).open("r", encoding="utf-8") as f:
+            return TaxRuleset.from_dict(json.load(f))

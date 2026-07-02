@@ -17,12 +17,14 @@ __all__ = [
     "FilingPackage", "JSONExporter", "SAFTExporter",
 ]
 
-import os as _os
-RULESETS_DIR = _os.path.join(_os.path.dirname(__file__), "rulesets")
+from pathlib import Path
+
+RULESETS_DIR = Path(__file__).with_name("rulesets")
 
 def load_ruleset(jurisdiction: str, year: int = 2025) -> TaxRuleset | None:
     import json as _json
-    path = _os.path.join(RULESETS_DIR, f"{jurisdiction}_{year}.json")
-    if not _os.path.exists(path):
+    path = RULESETS_DIR / f"{jurisdiction}_{year}.json"
+    if not path.exists():
         return None
-    return TaxRuleset.from_dict(_json.load(open(path)))
+    with path.open("r", encoding="utf-8") as f:
+        return TaxRuleset.from_dict(_json.load(f))

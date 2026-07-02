@@ -1,7 +1,4 @@
 """Property tests for vank.fieldledger.payroll."""
-import sys
-sys.path.insert(0, '/tmp/vank-dest/src')
-
 import pytest
 from vank.fieldledger.payroll import Employee, PayrollRun, PayslipCategory, Payslip
 from vank.fieldledger.ruleset import TaxRuleset, TaxParameter, BracketType, TaxBracket

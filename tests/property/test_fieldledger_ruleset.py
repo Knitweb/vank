@@ -1,12 +1,10 @@
 """Property tests for FieldLedger TaxRuleset + TaxEngine."""
-import sys, json, os
-sys.path.insert(0, '/tmp/vank-dest/src')
+import json
 
 import pytest
+from vank.fieldledger import RULESETS_DIR
 from vank.fieldledger.ruleset import TaxRuleset, TaxParameter, BracketType, TaxBracket
 from vank.fieldledger.engine import TaxEngine, TaxObligation
-
-RULESETS_DIR = '/tmp/vank-dest/src/vank/fieldledger/rulesets'
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -14,12 +12,12 @@ RULESETS_DIR = '/tmp/vank-dest/src/vank/fieldledger/rulesets'
 
 @pytest.fixture
 def nl_ruleset():
-    return TaxRuleset.load_from_file(os.path.join(RULESETS_DIR, 'NL_2025.json'))
+    return TaxRuleset.load_from_file(RULESETS_DIR / "NL_2025.json")
 
 
 @pytest.fixture
 def us_ruleset():
-    return TaxRuleset.load_from_file(os.path.join(RULESETS_DIR, 'US_2025.json'))
+    return TaxRuleset.load_from_file(RULESETS_DIR / "US_2025.json")
 
 
 @pytest.fixture

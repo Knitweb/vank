@@ -5,24 +5,25 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "knitweb-vank"
 version = "0.2.0"
-description = "vank — Vault DAO, graphical Scrum Poker, and pulse-integrated voting governance for Knitweb"
+description = "vank — Vault DAO, mint node, graphical Scrum Poker, and pulse-integrated governance for Knitweb"
 requires-python = ">=3.12"
 readme = "README.md"
-license = { text = "Apache-2.0" }
+license = "Apache-2.0"
 authors = [{ name = "Knitweb", email = "develuse@gmail.com" }]
-dependencies = []
+dependencies = ["cryptography>=42"]
 
 [project.optional-dependencies]
-dev = ["knitweb>=0.6.0", "pytest>=8"]
+dev = ["pytest>=8"]
 
 [project.scripts]
+vank = "vank.cli:main"
 vank-poker = "vank.poker_server:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-vank = ["static/*.html", "fieldledger/rulesets/*.json"]
+vank = ["static/*.html", "static/*.css", "static/*.js", "fieldledger/rulesets/*.json"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

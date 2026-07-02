@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vank Mint Node</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header>
+    <div>
+      <p class="eyebrow">Knitweb / ChemField fabric</p>
+      <h1>Vank Mint Node</h1>
+    </div>
+    <div class="balance">
+      <span>Netto VANK</span>
+      <strong id="balance">0</strong>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2>Certificeer server</h2>
+      <form id="register-form">
+        <label>KvK <input name="kvk_number" value="93406797" required></label>
+        <label>XRF-lab accreditatie <input name="xrf_lab_accreditation" value="RvA-L123" required></label>
+        <label>Chain-of-custody ref <input name="sample_custody_ref" value="SLAG-COC-2026-0007" required></label>
+        <label>Materialen <input name="materials" value="v2o5, vanadium" required></label>
+        <button type="submit">Teken mintrecht</button>
+      </form>
+      <pre id="grant"></pre>
+    </section>
+
+    <section class="panel">
+      <h2>Meld meting</h2>
+      <form id="measure-form">
+        <label>Materiaal <input name="material" value="v2o5" required></label>
+        <label>Batch-ID <input name="batch_id" value="SLAG-IJM-2026-021" required></label>
+        <label>Massa kg <input name="mass_kg" value="1000" required></label>
+        <label>XRF-grade ppm <input name="grade_ppm" type="number" value="10000" required></label>
+        <label>Assay-ID <input name="assay_id" value="XRF-2026-0421" required></label>
+        <button type="submit">Rapporteer + mint</button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2>Her-assay</h2>
+      <form id="revalue-form">
+        <label>Materiaal <input name="material" value="v2o5" required></label>
+        <label>Batch-ID <input name="batch_id" value="SLAG-IJM-2026-021" required></label>
+        <label>Massa kg <input name="mass_kg" value="1000" required></label>
+        <label>Nieuwe grade ppm <input name="grade_ppm" type="number" value="9500" required></label>
+        <label>Assay-ID <input name="assay_id" value="XRF-2026-0421-R1" required></label>
+        <button type="submit">Verwerk aftrek</button>
+      </form>
+    </section>
+
+    <section class="panel wide">
+      <h2>Grootboek</h2>
+      <div class="actions">
+        <button id="refresh">Ververs</button>
+        <button id="download">Download getekend rapport</button>
+      </div>
+      <div id="status"></div>
+      <div id="events"></div>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

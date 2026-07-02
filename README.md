@@ -1,13 +1,13 @@
 # knitweb/vank
 
-Vault DAO, graphical Scrum Poker, and pulse-integrated voting governance for Knitweb.
+Vault DAO, Vank Mint Node, graphical Scrum Poker, and pulse-integrated voting governance for Knitweb.
 
 Two packages co-reside in `src/`:
 
 | Package | Description |
 |---------|-------------|
 | `knitweb_vank` | Pulse-integrated voting governance: personhood-gated ballots, deterministic tallying, signed polls, ranked/liquid/crowdfund voting |
-| `vank` | Standalone float-friendly DAO + graphical Scrum Poker (zero deps beyond stdlib) |
+| `vank` | Standalone DAO, commodity mint node, FieldLedger, and graphical Scrum Poker |
 
 ## knitweb_vank
 
@@ -22,9 +22,61 @@ Pulse-dependent voting domain layer:
 
 Requires `knitweb` (Pulse) for canonical CIDs, signatures, fabric Web, and personhood tickets.
 
+## Vank Mint Node
+
+A running mint node for commodity tokenization on the Knitweb/ChemField fabric.
+The node lets a producer report XRF measurements as signed, content-addressed
+ledger events and mint VANK within a network-issued mint grant.
+
+Core rule: where measurement happens, reporting happens. A measurement only
+counts after it is in the ledger as a signed event. The mint follows from that
+event.
+
+### Quickstart
+
+```bash
+pip install cryptography
+python -m vank serve
+# open http://127.0.0.1:8799/
+```
+
+Headless:
+
+```bash
+python -m vank register --kvk 93406797 --lab RvA-L123 --custody SLAG-COC-2026-0007 \
+  --material v2o5 --material vanadium
+python -m vank measure v2o5 SLAG-IJM-2026-021 1000 10000 XRF-2026-0421
+python -m vank balance
+python -m vank audit
+python -m vank export report.json
+```
+
+Trust chain:
+
+```text
+network authority -> mint grant -> producer key -> signed measurement -> mint
+```
+
+Value math is integer-only:
+
+```text
+contained_ug = mass_g * grade_ppm
+tokens       = contained_ug // ug_per_token
+```
+
+Defaults: `ug_per_token = 1_000_000`, so one token equals one gram of measured
+contained material. Re-assays can only reduce value; the node burns the delta.
+
+Production notes:
+
+- Use `--no-demo-authority` and install an out-of-band grant for real networks.
+- Keep the state file secret; it contains private keys.
+- Cross-producer duplicate detection belongs in the shared registry/fabric layer.
+- Commodity-token legal scope needs explicit review before scale-up.
+
 ## vank — Vault DAO + Scrum Poker
 
-Standalone, zero-dependency (stdlib only) DAO layer with graphical Scrum Poker:
+Standalone DAO layer with graphical Scrum Poker:
 
 - `VankDAO` — float-friendly, insertion-ordered, recency-weighted tally, EMA momentum
 - `PokerSession` — Fibonacci deck, tolerance-based consensus, outlier detection, upper-median agreed card
@@ -50,7 +102,11 @@ PYTHONPATH=src python3 -m vank.poker_server --port 8000
 src/
   knitweb_vank/   pulse-integrated governance modules
   vank/            standalone DAO + Scrum Poker
-    static/        poker.html self-contained UI
+    crypto.py      Ed25519 keys, signing, content-address helpers
+    core.py        authority, grant, signed events, mint node, integer token math
+    server.py      stdlib HTTP server for mint-node GUI/API
+    cli.py         serve/register/measure/revalue/balance/audit/export
+    static/        mint-node browser UI assets
 tests/
   property/
     test_vbank_*   knitweb_vank property tests (require knitweb)
