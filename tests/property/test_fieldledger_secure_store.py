@@ -1,5 +1,5 @@
 """Property tests for vank.fieldledger.secure_store.SecureStore."""
-import sys, tempfile, os; sys.path.insert(0, '/tmp/vank-dest/src')
+import os
 import json
 import pytest
 import vank.fieldledger.secure_store as _ss_mod

@@ -8,7 +8,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out vBank
+      - name: Check out Vank
         uses: actions/checkout@v4
 
       - name: Check out Pulse dependency
@@ -26,9 +26,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip pytest
           python -m pip install -e pulse
+          python -m pip install -e .
 
       - name: Compile
-        run: PYTHONPATH=src:pulse/src python -m py_compile src/knitweb_vbank/*.py
+        run: PYTHONPATH=src:pulse/src python -m py_compile src/knitweb_vank/*.py src/vank/*.py
 
       - name: Tests
         run: PYTHONPATH=src:pulse/src python -m pytest -q
