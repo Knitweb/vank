@@ -1,0 +1,10 @@
+# githfield.yml — links this repo's docs & backlog into githfield
+field:   vank
+name:    vBank
+accent:  "#ffd479"
+summary: Governance hub — voting, quorum & treasury for every knitweb field
+homepage: https://knitweb.art
+backlog:
+  labels: []
+  group_by: ""
+docs: []
