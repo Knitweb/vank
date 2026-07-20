@@ -6,7 +6,7 @@ Two packages co-reside in `src/`:
 
 | Package | Description |
 |---------|-------------|
-| `knitweb_vank` | Pulse-integrated voting governance: personhood-gated ballots, deterministic tallying, signed polls, ranked/liquid/crowdfund voting |
+| `knitweb_vank` | Pulse-integrated voting governance: personhood-gated ballots, deterministic tallying, signed polls, ranked/liquid/crowdfund voting — plus `vfloat`, the deterministic numeric kernel for PQ and voting weights |
 | `vank` | Standalone DAO, commodity mint node, FieldLedger, and graphical Scrum Poker |
 
 ## knitweb_vank
@@ -19,6 +19,12 @@ Pulse-dependent voting domain layer:
 - Signed election manifests grouping multiple poll definitions
 - Demographic vote-supply registries, treasury-backed vote issuance, recency weighting
 - One-person-one-backing crowdfunding, proximity-gated local backing
+- **`vfloat` — the vank deterministic numeric kernel ("vank floats")**: fixed point on
+  plain Python integers (wei-style `10^18` scale, banker's rounding), integer-Taylor
+  trig, complex `e^(i·θ)` phasors and deterministic Feynman path sums. Shared by vBank
+  voting weights and **PQ (Pulse Quantum)**; values exit to fabric records only through
+  the integer boundaries `amplitude_micro` / `prob_milli`. See
+  `docs/DUAL_COIN_IPO_PLAN.md` §5 in [Knitweb/pulse](https://github.com/Knitweb/pulse).
 
 Requires `knitweb` (Pulse) for canonical CIDs, signatures, fabric Web, and personhood tickets.
 

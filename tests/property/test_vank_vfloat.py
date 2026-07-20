@@ -8,7 +8,7 @@ contract is determinism, not ulp-perfection).
 
 import math
 
-from knitweb_vbank.vfloat import (
+from knitweb_vank.vfloat import (
     CF, HALF_PI, ONE, PI, SCALE, TWO_PI,
     amplitude_micro, c_abs2, c_add, c_exp_i, c_mul, div_round,
     fp_cos, fp_div, fp_exp, fp_from_str, fp_mul, fp_sin, fp_sqrt, fp_to_str,

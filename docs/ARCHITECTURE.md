@@ -2,7 +2,10 @@
 
 vank is a domain package on top of Knitweb/Pulse. It does not define core consensus,
 fabric, identity, or personhood primitives. It consumes those primitives to build
-auditable voting records.
+auditable voting records. It additionally owns `vfloat`, the org-wide deterministic
+fixed-point numeric kernel ("vank floats") used for fractional voting weights and for
+PQ (Pulse Quantum) Feynman path sums — hardware floats stay banned from the fabric;
+`vfloat` results cross into records only as integers (`amplitude_micro`, `prob_milli`).
 
 ## Dependency Boundary
 
