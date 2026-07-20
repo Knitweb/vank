@@ -8,6 +8,8 @@ contract is determinism, not ulp-perfection).
 
 import math
 
+import pytest
+
 from knitweb_vank.vfloat import (
     CF, HALF_PI, ONE, PI, SCALE, TWO_PI,
     amplitude_micro, c_abs2, c_add, c_exp_i, c_mul, div_round,
@@ -62,11 +64,29 @@ def test_trig_golden_values_bit_exact():
 def test_exp_accuracy_and_bound():
     assert fp_exp(0) == ONE
     assert abs(fp_exp(ONE) / SCALE - math.e) < 1e-12
-    try:
+    with pytest.raises(ValueError):
         fp_exp(41 * ONE)
-        raise AssertionError("expected ValueError for out-of-range fp_exp")
-    except ValueError:
-        pass
+    with pytest.raises(ValueError):
+        fp_exp(-41 * ONE)
+
+
+def test_angle_reduction_is_exactly_periodic():
+    # Reduction is an exact integer modulo, so shifting by any multiple of 2π
+    # must give bit-identical trig results — not merely close ones.
+    for frac in ("0.3", "1.7", "-2.4"):
+        x = fp_from_str(frac)
+        for periods in (1, -1, 5, 1000):
+            shifted = x + periods * TWO_PI
+            assert fp_sin(shifted) == fp_sin(x)
+            assert fp_cos(shifted) == fp_cos(x)
+
+
+def test_literal_rejects_bare_signs():
+    for bad in ("+", "-", "", " . "):
+        with pytest.raises(ValueError):
+            fp_from_str(bad)
+    with pytest.raises(ValueError):
+        prob_milli(2 * ONE, ONE)  # weight beyond total is a caller bug
 
 
 def test_unit_phasor_norm():

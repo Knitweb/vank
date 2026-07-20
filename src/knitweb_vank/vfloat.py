@@ -77,6 +77,8 @@ def fp_from_str(text: str) -> int:
     sign = -1 if text.startswith("-") else 1
     text = text.lstrip("+-")
     whole, _, frac = text.partition(".")
+    if not whole and not frac:
+        raise ValueError("not a decimal literal")
     if len(frac) > 18:
         raise ValueError("more than 18 fractional digits is not representable")
     whole_i = int(whole) if whole else 0
@@ -228,4 +230,6 @@ def prob_milli(weight: int, total: int) -> int:
         raise ValueError("total weight must be positive")
     if weight < 0:
         raise ValueError("weight must be non-negative")
+    if weight > total:
+        raise ValueError("weight must not exceed the total")
     return div_round(weight * 1000, total)
