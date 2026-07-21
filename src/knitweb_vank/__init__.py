@@ -79,6 +79,7 @@ from .recency import Decay, Vote, WeightedTally, recency_tally
 from .crowdfund import Campaign, CampaignResult, CampaignStatus, Pledge
 from .proximity import ProximityProof, attest as attest_proximity
 from .settle import SettlementKind, SettlementOrder, settle
+from .apportion import ChargeCollection, collect_charge, quantize_conserving
 
 __all__ = [
     "Ballot", "VbankKnitweb", "tally", "collect_ballots", "BALLOT_KIND", "TALLY_KIND",
@@ -98,6 +99,7 @@ __all__ = [
     "WeightedTally", "recency_tally", "Campaign", "CampaignResult",
     "CampaignStatus", "Pledge", "ProximityProof", "attest_proximity",
     "SettlementKind", "SettlementOrder", "settle",
+    "ChargeCollection", "collect_charge", "quantize_conserving",
 ]
 
 
